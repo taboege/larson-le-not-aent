@@ -7,10 +7,178 @@ rank axioms and a violation of planar Desargues. Together with the mathematical
 extension and minor theorems described below, this certifies that the starting
 matroid is not almost entropic.
 
-All computation and example data are in [`im_projection.py`](im_projection.py).
+The LP computation and its input data are in [`im_projection.py`](im_projection.py).
 The program needs no input files, saved certificates, SageMath, or Anaconda.
 It follows a fixed sequence of six extensions; it does not repeat the search
 that discovered that sequence.
+
+## Proof outline
+
+### The starting matroid
+
+Let `N` be Larson-Le's rank-six algebraic matroid on `E = {1,...,10}`
+([LL], Example 1.3). Over the rational function field
+`F_2(t_1,...,t_6)`, its elements are the following functions, with the indicated
+labels:
+
+```text
+1:  t_1
+2:  t_2
+3:  t_3
+4:  t_1*t_2*t_3*(t_4+t_6)
+5:  t_1*t_3*(t_4+t_5+t_6)
+6:  t_1^2*t_2*t_3*(t_4+t_5)
+7:  t_1*t_2*(t_5+t_6)
+8:  t_4
+9:  t_5
+10: t_6
+```
+
+The rank of a subset is the transcendence degree of its functions over `F_2`.
+We start the extension argument with **`D = N*`**, its rank-four dual, using
+the same labels. Thus `r_D(A) = |A| - 6 + r_N(E \ A)`. Its bases are all
+four-subsets of `E` except these 20 non-bases ([LL], equation (1)):
+
+```text
+{1,2,3,4}   {1,2,5,6}   {1,3,6,7}   {2,3,5,7}   {2,4,6,7}
+{2,5,8,9}   {2,5,8,10}  {2,5,9,10}  {2,8,9,10}  {3,4,5,6}
+{3,4,5,8}   {3,4,6,8}   {3,5,6,8}   {4,5,6,8}   {4,5,7,10}
+{4,6,9,10}  {4,7,8,9}   {5,6,7,9}   {5,8,9,10}  {6,7,8,10}
+```
+
+The [Macaulay2 check below](#independent-algebraic-representation-check)
+recovers these data directly from the functions. Matúš's theorem [M24] says
+that algebraic matroids are almost entropic, so `N` is almost entropic. We
+prove that `D` is not almost entropic by assuming the opposite and deriving
+a Desargues contradiction.
+
+### Six almost-entropic Ingleton-Main extensions
+
+The extension fact we use is a statement about **real-valued polymatroids**.
+If an almost-entropic rank function `h` satisfies
+
+$$
+h(L_i)=2,\qquad h(L_i\cup L_j)=3\ (i\ne j),\qquad
+h(L_1\cup L_2\cup L_3)=4,
+$$
+
+it admits an almost-entropic extension by an element `z` such that
+
+$$
+h(z)=1,\qquad h(L_i\cup\{z\})=h(L_i)\quad(i=1,2,3).
+$$
+
+This follows from the almost-entropic Ahlswede-Körner extension property and
+its three-line consequence in [BFP], Propositions 3.13 and 3.16. The new
+element is in the closure of each of the three lines. The resulting extension
+need not be a matroid; no integrality assumption is made.
+
+Starting with `h_0 = r_D`, perform the following extensions in order:
+
+| New element | First line | Second line | Third line |
+| --- | --- | --- | --- |
+| 11 | {4,6} | {5,8} | {9,10} |
+| 12 | {4,8} | {5,6} | {7,9} |
+| 13 | {2,11} | {4,7} | {5,10} |
+| 14 | {4,5} | {6,8} | {7,10} |
+| 15 | {1,2} | {3,4} | {5,6} |
+| 16 | {1,6} | {2,5} | {3,7} |
+
+Before each step, the program proves all seven rank premises by exact lower
+and upper bounds derived from the current LP. These premises hold for every
+polymatroid allowed by the preceding constraints, so in particular for each
+almost-entropic extension supplied by the theorem. Fractional possibilities
+remain in the LP whenever their ranks are not forced. There is no branching
+over integral matroid extensions.
+
+### The exact minor
+
+Let `h_6` be the extension on `{1,...,16}`. Contract element **13** and restrict
+to
+
+$$
+T=\{1,2,4,5,6,8,12,14,15,16\}.
+$$
+
+Equivalently, contract `{13}` and delete `{3,7,9,10,11}`. The resulting rank
+function is
+
+$$
+g(S)=h_6(S\cup\{13\})-h_6(\{13\})
+    =h_6(S\cup\{13\})-1\qquad(S\subseteq T).
+$$
+
+Restriction and contraction preserve almost entropicity; see [M18]. For
+contraction, conditional entropy vectors are averages of entropy vectors,
+hence belong to the closed convex almost-entropic cone, and the contraction
+map is continuous. Thus `g` would be almost entropic.
+
+The computation determines **all 1,024 values of `g` uniquely** and checks
+that they are the ranks of a simple rank-three matroid `M`. This conclusion
+is about the minor: the ambient `h_6` still has undetermined ranks.
+
+### Bases and lines of the final matroid
+
+The complete list of **104 bases** is in
+[`data/final_matroid.json`](data/final_matroid.json). Equivalently, the bases
+are **all three-subsets of `T` except the following 16 triples**:
+
+```text
+{1,2,15}  {1,6,16}  {2,4,6}   {2,5,8}
+{2,5,16}  {2,8,16}  {2,12,14} {4,5,14}
+{4,8,12}  {4,15,16} {5,6,12}  {5,6,15}
+{5,8,16}  {5,12,15} {6,8,14}  {6,12,15}
+```
+
+Its ten lines containing at least three points are exactly
+
+```text
+{1,2,15}     {1,6,16}    {2,4,6}    {2,5,8,16} {2,12,14}
+{4,5,14}     {4,8,12}    {4,15,16}  {5,6,12,15} {6,8,14}
+```
+
+Every other line contains just two points. The two four-point lines each
+account for four dependent triples; the other eight lines each account for
+one. Hence the number of bases is `binomial(10,3) - 2*4 - 8 = 104`.
+
+### The Desargues violation
+
+Use the following labels for two triangles, their perspective center, and
+their corresponding side intersections:
+
+$$
+O=4,\quad (a_1,a_2,a_3)=(2,15,12),\quad
+(b_1,b_2,b_3)=(6,16,8),\quad (x_1,x_2,x_3)=(5,14,1).
+$$
+
+Both triangles have rank three, every point has rank one, and every distinct
+pair has rank two. These nine triples all have rank two:
+
+| Incidence | Actual triple |
+| --- | --- |
+| `O, a_1, b_1` | {4,2,6} |
+| `O, a_2, b_2` | {4,15,16} |
+| `O, a_3, b_3` | {4,12,8} |
+| `a_2, a_3, x_1` | {15,12,5} |
+| `b_2, b_3, x_1` | {16,8,5} |
+| `a_1, a_3, x_2` | {2,12,14} |
+| `b_1, b_3, x_2` | {6,8,14} |
+| `a_1, a_2, x_3` | {2,15,1} |
+| `b_1, b_2, x_3` | {6,16,1} |
+
+Yashfe's almost-entropic Desargues theorem [Y], Theorem 18 with the planar
+case in Remark 19, would force `x_1,x_2,x_3` to be collinear. The clause for
+an already existing third intersection applies because `x_3 = 1` is already
+an element and all distinct pairs are independent. However, the computed rank is
+
+$$
+\boxed{g(\{x_1,x_2,x_3\})=g(\{1,5,14\})=3,\quad\text{not }2.}
+$$
+
+This contradiction proves that `D = N*` is not almost entropic, while its
+algebraic dual `N` is almost entropic. The use of Remark 19 is justified by
+the complete matroid-rank check on the minor, not by an integrality assumption
+on the six intermediate extensions.
 
 ## Install and run
 
@@ -97,15 +265,9 @@ valid objective bounds. Equality is certified by matching exact bounds, without
 rounding ranks to integers. The final restriction is checked to have integral
 ranks and satisfy the matroid rank axioms.
 
-The mathematical ingredients outside the computation are the almost-entropic
-three-line extension theorem, closure under minors, and the planar Desargues
-theorem. The LPs themselves impose Shannon inequalities, which are necessary
-conditions for almost entropicity. Relevant papers are:
-
-* Matt Larson and Tuong Le, [*Duals of algebraic matroids need not be algebraic*](https://arxiv.org/abs/2609.02834).
-  The initial non-bases are those of their dual matroid.
-* Geva Yashfe, [*On the recognition problem for limits of entropy functions*](https://arxiv.org/abs/2509.06302),
-  Theorem 18 and Remark 19, for planar Desargues.
+The LPs impose Shannon inequalities, which are necessary conditions for almost
+entropicity. The extension, minor, and Desargues theorems in the proof outline
+are mathematical inputs, not claims proved by the solver.
 
 ## Independent algebraic representation check
 
@@ -168,3 +330,37 @@ python -m build
 The files appear in `dist/`. Someone receiving the wheel can install it with
 `python -m pip install path/to/larson_le_verification-0.1.0-py3-none-any.whl`;
 pip will also install its dependencies.
+
+## References
+
+* **LL.** Matt Larson and Tuong Le, *Duals of algebraic matroids need not be
+  algebraic* (2026), [arXiv:2609.02834v1][LL]. Example 1.3 gives the algebraic
+  representation; equation (1) specifies the dual's non-bases.
+* **BFP.** Michael Bamiloshin, Oriol Farràs and Carles Padró, *A note on extension
+  properties and representations of matroids*, Discrete Applied Mathematics
+  **376** (2025), 270–280. [DOI:10.1016/j.dam.2025.06.028][BFP].
+  Propositions 3.13 and 3.16 supply the almost-entropic three-line extension
+  used here. [Open-access manuscript](https://repositori.urv.cat/repositori/getDocument/imarina:9462591?ds=DocumentPrincipal&mime=application/pdf).
+* **Y.** Geva Yashfe, *On the recognition problem for limits of entropy
+  functions* (2025), [arXiv:2509.06302v1][Y]. Theorem 18 and Remark 19 supply
+  the almost-entropic Desargues obstruction, including the planar case.
+* **M24.** František Matúš, *Algebraic matroids are almost entropic*, Proceedings
+  of the American Mathematical Society **152** (2024), 1–6.
+  [DOI:10.1090/proc/13846][M24], Theorem 1.
+  [Author manuscript](https://staff.utia.cas.cz/matus/algaent.pdf).
+* **M18.** František Matúš, *Classes of matroids closed under minors and principal
+  extensions*, Combinatorica **38** (2018), 935–954.
+  [DOI:10.1007/s00493-017-3534-y][M18]. Background on the almost-entropic class
+  and minor operations. [Author manuscript](https://staff.utia.cas.cz/matus/FINmatpriext.pdf).
+* **O.** James Oxley, *Matroid Theory*, second edition, Oxford University Press
+  (2011), §1.5, “Geometric representations of matroids of small rank”.
+  [Book DOI][O]. See also his openly available
+  [*What is a matroid?*](https://www.math.lsu.edu/~oxley/survey4.pdf) for geometric
+  diagrams of small-rank matroids.
+
+[LL]: https://arxiv.org/html/2609.02834v1
+[BFP]: https://doi.org/10.1016/j.dam.2025.06.028
+[Y]: https://arxiv.org/html/2509.06302v1
+[M24]: https://doi.org/10.1090/proc/13846
+[M18]: https://doi.org/10.1007/s00493-017-3534-y
+[O]: https://doi.org/10.1093/acprof:oso/9780198566946.001.0001
