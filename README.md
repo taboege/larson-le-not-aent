@@ -1,5 +1,13 @@
 # Larson-Le verification
 
+---
+
+**Human note: This repository contains a program which is supposed to verify
+that the dual of the Larson-Le matroid is not almost-entropic. Up to this
+point no human has read this program and verified that it is correctly implemented.**
+
+---
+
 One Python program recomputes six Ingleton-Main (IM) extensions of Larson-Le's
 rank-four dual matroid, contracts one element, and determines all 1,024 ranks
 of a ten-element restriction by linear programming. It then checks the matroid
