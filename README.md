@@ -166,19 +166,317 @@ pair has rank two. These nine triples all have rank two:
 | `a_1, a_2, x_3` | {2,15,1} |
 | `b_1, b_2, x_3` | {6,16,1} |
 
-Yashfe's almost-entropic Desargues theorem [Y], Theorem 18 with the planar
-case in Remark 19, would force `x_1,x_2,x_3` to be collinear. The clause for
-an already existing third intersection applies because `x_3 = 1` is already
-an element and all distinct pairs are independent. However, the computed rank is
+The nondegenerate planar Desargues theorem proved in the next section forces
+`x_1,x_2,x_3` to be collinear. Besides the incidences above, the program checks
+`g(O,a_i,a_j) = 3` for every `i != j`, so corresponding sides are distinct.
+The proof uses [Y], Lemma 16 and Theorem 18, and makes the lifting argument
+suggested in Remark 19 explicit. Its final uniqueness argument applies to
+the existing intersection `x_3 = 1`. However, the computed rank is
 
 $$
 \boxed{g(\{x_1,x_2,x_3\})=g(\{1,5,14\})=3,\quad\text{not }2.}
 $$
 
 This contradiction proves that `D = N*` is not almost entropic, while its
-algebraic dual `N` is almost entropic. The use of Remark 19 is justified by
-the complete matroid-rank check on the minor, not by an integrality assumption
+algebraic dual `N` is almost entropic. The complete matroid-rank and
+nondegeneracy checks are on the minor; no integrality assumption is made
 on the six intermediate extensions.
+
+## A detailed planar Desargues proof
+
+Here is an explicit version of the lift-and-project argument suggested in
+[Y], Remark 19. We include a nondegeneracy hypothesis excluding coincident
+corresponding sides. This hypothesis matters when intersection points are
+prescribed; the counterexample at the end of this section explains why.
+Our final matroid satisfies it even though two of its lines have four points.
+
+### Statement and ingredients
+
+Let `r` be the rank function of a simple almost-entropic rank-three matroid
+on `E`, containing nine distinct points
+
+$$
+O,a_1,a_2,a_3,b_1,b_2,b_3,x_1,x_2.
+$$
+
+Assume both triangles have rank three, and assume
+
+$$
+\begin{aligned}
+r(O,a_i,b_i)&=2 &&(i=1,2,3),\\
+r(a_2,a_3,x_1)&=r(b_2,b_3,x_1)=2,\\
+r(a_1,a_3,x_2)&=r(b_1,b_3,x_2)=2,\\
+r(O,a_i,a_j)&=3 &&(1\leq i<j\leq3).
+\end{aligned}
+$$
+
+Then an almost-entropic polymatroid extension contains a point `z` with
+
+$$
+h(z)=1,\qquad
+h(a_1,a_2,z)=h(b_1,b_2,z)=h(x_1,x_2,z)=2.
+$$
+
+If a rank-one point `t` already belongs to both corresponding side lines
+`cl(a_1,a_2)` and `cl(b_1,b_2)`, then `r(x_1,x_2,t)=2`.
+
+We use three established ingredients: the almost-entropic copy lemma
+([Y], Lemma 16), the rank-four Desargues theorem ([Y], Theorem 18), and the
+almost-entropic three-line extension property ([BFP], Propositions 3.13 and
+3.16). In the last property, three rank-two sets whose pairwise unions have
+rank three and whose total union has rank four acquire a common rank-one
+point. These are statements about real-valued polymatroids.
+
+Throughout the proof, `h` denotes the rank in the current extension, and
+`cl` its closure. Juxtaposition denotes union, and
+`h(S | T) = h(S T) - h(T)`. Later extensions preserve earlier ranks.
+
+### 1. Copy three points into a second plane
+
+Apply the copy lemma with base and copied set
+
+$$
+K=\{O,a_3,b_3\},\qquad U=\{a_2,b_2,x_1\},
+$$
+
+and call the new points `U' = {a_2',b_2',x_1'}`. We have `r(K)=2` and
+`r(K,u)=3` for each `u` in `U`. For `a_2` this is a stated hypothesis;
+for `b_2` it follows from the line `O,a_2,b_2`. For `x_1`, being on both
+`cl(a_2,a_3)` and `cl(K)` would put `a_2` in `cl(K)`, a contradiction.
+Here simplicity lets either distinct pair on a rank-two line span that line.
+
+The copy lemma preserves the ranks on `K U` under the map `u -> u'`, and
+makes `U'` independent from `E` conditionally on `K`. Consequently,
+
+$$
+h(EU')=3+3-2=4,\qquad h(KU')=3,
+$$
+
+and, for every `u` in `U`,
+
+$$
+h(u'\mid E)=1,\qquad h(u\mid KU')=1.
+$$
+
+Thus every copied point is independent from the old plane. In particular,
+all pairs among the old and copied points have rank two. No assertion that
+the entire extension is a matroid is needed.
+
+### 2. Construct a point outside the old plane
+
+Consider
+
+$$
+L_1=\{a_2,a_2'\},\quad
+L_2=\{b_2,b_2'\},\quad
+L_3=\{x_1,x_1'\}.
+$$
+
+Each has rank two. The original and copied incidences give
+
+$$
+\begin{aligned}
+h(L_1L_2)&=h(O,a_2,a_2')=3,\\
+h(L_1L_3)&=h(a_3,a_2,a_2')=3,\\
+h(L_2L_3)&=h(b_3,b_2,b_2')=3.
+\end{aligned}
+$$
+
+For example, `a_2,b_2` recover `O`, and the lines through `O` recover the
+other endpoints, proving the first closure equality. The others use `a_3`
+and `b_3` in the same way. The union of all three lines spans
+`O,a_3,a_2,a_2'`, which has rank four. The three-line extension property
+therefore supplies a rank-one point
+
+$$
+p\in\operatorname{cl}(a_2,a_2')
+ \cap\operatorname{cl}(b_2,b_2')
+ \cap\operatorname{cl}(x_1,x_1').
+$$
+
+We will need `h(p,a_2)=h(p,a_2')=2`. Both follow from diminishing returns,
+since `p` is in `cl(L_2)` and
+
+$$
+h(L_2,a_2)=h(L_2,a_2')=3.
+$$
+
+The first equality uses independence of `b_2'` from the old plane; the
+second uses independence of `b_2` from the copied plane `K U'`. Explicitly,
+for `v = a_2` or `a_2'`,
+
+$$
+h(p,v)-h(p)\geq h(L_2,v)-h(L_2)=1.
+$$
+
+Since `a_2'` belongs to `cl(a_2,p)`, we obtain `h(E,p)=4` and hence
+`h(p | E)=1`: `p` is outside the old plane.
+
+### 3. Apply the rank-four theorem to mixed triangles
+
+Use the following substitution into [Y], Theorem 18:
+
+| Role in that theorem | Point or ordered triple here |
+| --- | --- |
+| Perspective center | `O` |
+| First triangle | `(a_2', a_1, a_3)` |
+| Second triangle | `(b_2', b_1, b_3)` |
+| First known side intersection | `x_2` |
+| Second known side intersection | `x_1'` |
+
+All nine points have rank one and all distinct pairs have rank two.
+The three perspective incidences and four side incidences come directly
+from the original configuration or its copied restriction. The rank-four
+hypothesis is
+
+$$
+h(O,a_2',a_1,a_3)=r(O,a_1,a_3)+h(a_2'\mid O,a_1,a_3)=3+1=4.
+$$
+
+The theorem supplies a rank-one point
+
+$$
+q\in\operatorname{cl}(a_1,a_2')
+ \cap\operatorname{cl}(b_1,b_2')
+ \cap\operatorname{cl}(x_2,x_1'),
+$$
+
+and includes the conclusion `h(q,a_2')=2` (also `h(q,b_2')=2`).
+This uses the rank-four theorem itself, not the planar remark.
+
+### 4. Construct the missing intersection
+
+First, `h(p,q)=2`. Indeed, the equalities
+`h(p,a_2')=h(q,a_2')=2` imply
+
+$$
+a_2\in\operatorname{cl}(p,a_2'),\qquad
+a_1\in\operatorname{cl}(q,a_2').
+$$
+
+Thus `h(p,q,a_2') >= h(a_1,a_2,a_2') = 3`, and subadditivity gives
+`h(p,q) >= 2`; the reverse bound follows from the singleton ranks.
+
+Now consider the three rank-two sets
+
+$$
+A=\{a_1,a_2\},\qquad B=\{b_1,b_2\},\qquad P=\{p,q\}.
+$$
+
+Their pairwise union ranks are all three. For `A B`, the union spans
+`O,a_1,a_2`, which has rank three. For `A P`, all four points lie in
+`cl(a_1,a_2,a_2')`, of rank three, and the rank is at least three because
+`p` is independent from the old rank-two set `A`. The same argument for
+`B P` uses `cl(b_1,b_2,b_2')`. Finally, `A B` spans the old plane and `p`
+is outside it, so `h(A B P)=4`.
+
+A second three-line extension supplies a rank-one point
+
+$$
+z\in\operatorname{cl}(a_1,a_2)
+ \cap\operatorname{cl}(b_1,b_2)
+ \cap\operatorname{cl}(p,q).
+$$
+
+In particular, `z` is in the closure of the old plane.
+
+### 5. Project the collinearity back to the old plane
+
+The set `{x_1,x_2,x_1'}` has rank three. Its closure contains `p`, because
+`p` is on `cl(x_1,x_1')`, and `q`, because `q` is on `cl(x_2,x_1')`.
+It therefore contains `z`. Consequently,
+
+$$
+h(x_1,x_2,z,x_1')=3.
+$$
+
+Since `z` is in `cl(E)` and `h(x_1' | E)=1`, diminishing returns gives
+`h(x_1' | x_1,x_2,z)=1`. Subtracting yields
+
+$$
+h(x_1,x_2,z)=3-1=2.
+$$
+
+This proves the existence conclusion. The calculation uses exact rank
+increments and submodularity; it never rounds a fractional rank or assumes
+the copied or extended polymatroids are matroids.
+
+### 6. Identify an already existing intersection
+
+Suppose `t` is an existing rank-one point on both `cl(A)` and `cl(B)`.
+Since `h(A)=h(B)=2` and `h(A B)=3`, submodularity gives
+
+$$
+h(z,t)\leq h(Azt)+h(Bzt)-h(ABzt)=2+2-3=1.
+$$
+
+Monotonicity gives the reverse inequality, so `h(z,t)=1`: the two points
+have the same closure. Hence `r(x_1,x_2,t)=h(x_1,x_2,z)=2`.
+This proves uniqueness up to parallelism even in a real-valued polymatroid
+extension. The distinctness of the two side lines, expressed by `r(A B)=3`,
+is essential here.
+
+### Check on the computed matroid
+
+The saved 1,024 exact ranks and the complete basis list agree on every
+subset. They satisfy the matroid rank axioms. With the labels in the proof
+outline, both triangles have rank three, all ten points have rank one,
+and all 45 distinct pairs have rank two. The additional nondegeneracy
+checks are
+
+$$
+g(4,2,15)=g(4,2,12)=g(4,15,12)=3.
+$$
+
+The complete corresponding side lines are:
+
+| Intersection | First side flat | Second side flat | Intersection of the flats |
+| --- | --- | --- | --- |
+| `x_1 = 5` | `{5,6,12,15}` | `{2,5,8,16}` | `{5}` |
+| `x_2 = 14` | `{2,12,14}` | `{6,8,14}` | `{14}` |
+| `x_3 = 1` | `{1,2,15}` | `{1,6,16}` | `{1}` |
+
+Each pair of side flats has union rank three. The four-point lines add
+`b_1` to `cl(a_2,a_3)` and `a_1` to `cl(b_2,b_3)`; they do not identify
+either pair of corresponding sides. The additional line `{4,5,14}` puts
+`O` on `cl(x_1,x_2)`, which is also allowed: the proof never requires
+`r(O,x_1,x_2)=3`.
+
+For a completely concrete naming of the hypothetical extensions above:
+
+| Operation | New points and incidences |
+| --- | --- |
+| Conditional copy | Copy `(15,16,5)` over `{4,12,8}` to `(17,18,19)` |
+| First three-line extension | `20` on `{15,17}`, `{16,18}`, `{5,19}` |
+| Rank-four Desargues | Center `4`, triangles `(17,2,12)` and `(18,6,8)`, known intersections `(14,19)`; obtain `21` on `{17,2}`, `{18,6}`, `{14,19}` |
+| Second three-line extension | `22` on `{2,15}`, `{6,16}`, `{20,21}` |
+
+The proof gives `h(5,14,22)=2` and `h(1,22)=1`, contradicting the computed
+`g(1,5,14)=3`. These are hypothetical extensions under the assumption that
+the final matroid is almost entropic; they are mathematical proof steps,
+not additional LP operations performed by `im_projection.py`.
+
+### Why the nondegeneracy condition is explicit
+
+Read literally without excluding coincident sides, the rank-three
+replacement in [Y], Remark 19 is too broad for prescribed intersection
+points. A representable example already shows the issue. Over the field
+with 101 elements, take the following projective columns:
+
+```text
+O : (2,0,1)     a_1: (0,1,1)     a_2: (0,0,1)     a_3: (1,0,1)
+b_1: (2,1,2)   b_2: (3,0,1)     b_3: (4,0,1)
+x_1: (5,0,1)   x_2: (2,3,5)     x_3: (0,3,4)
+```
+
+This is a simple rank-three matroid; both triangles have rank three and
+all nine indicated incidence triples have rank two, but `r(x_1,x_2,x_3)=3`.
+The problem is that `cl(a_2,a_3) = cl(b_2,b_3)`: the prescribed `x_1` was
+chosen arbitrarily on that common line. In particular, `r(O,a_2,a_3)=2`.
+Representable matroids are almost entropic, so this degeneracy cannot be
+ignored. The verifier explicitly rejects it. Our proof above supplies the
+nondegenerate version actually used here directly from the copy lemma,
+the rank-four theorem, and the three-line extension property.
 
 ## Drawing the matroid
 
@@ -405,7 +703,8 @@ for dependency metadata. `pip install .` installs the verifier, the drawing
 helper, and the `larson-le-verify` and `draw-matroid` commands. PNG rendering
 dependencies are optional. No separate `setup.py` or dependency list is needed.
 
-The drawing and input-validation tests use the standard-library test runner:
+The drawing, input-validation, and planar-theorem tests use the
+standard-library test runner:
 
 ```sh
 python -m unittest discover -s tests -v
@@ -436,8 +735,10 @@ layout, both figure formats, and tests.
   Propositions 3.13 and 3.16 supply the almost-entropic three-line extension
   used here. [Open-access manuscript](https://repositori.urv.cat/repositori/getDocument/imarina:9462591?ds=DocumentPrincipal&mime=application/pdf).
 * **Y.** Geva Yashfe, *On the recognition problem for limits of entropy
-  functions* (2025), [arXiv:2509.06302v1][Y]. Theorem 18 and Remark 19 supply
-  the almost-entropic Desargues obstruction, including the planar case.
+  functions* (2025), [arXiv:2509.06302v1][Y]. Lemma 16 supplies the copy lemma
+  and Theorem 18 the rank-four Desargues theorem. The detailed proof above
+  expands the lifting idea in Remark 19 with explicit planar nondegeneracy
+  hypotheses.
 * **M24.** František Matúš, *Algebraic matroids are almost entropic*, Proceedings
   of the American Mathematical Society **152** (2024), 1–6.
   [DOI:10.1090/proc/13846][M24], Theorem 1.

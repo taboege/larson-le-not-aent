@@ -20,7 +20,8 @@ certify a false equality. Run without Python's -O option (checks use assert).
 
 The LPs impose Shannon inequalities, not almost entropicity. The mathematical
 ingredients outside this program are the AE three-line extension theorem,
-minor closure, and planar Desargues (Yashfe, arXiv:2509.06302, Thm 18/Rem 19).
+minor closure, and nondegenerate planar Desargues (derived in the README
+from Yashfe, arXiv:2509.06302, Lemma 16 and Theorem 18).
 """
 
 import argparse
@@ -294,10 +295,15 @@ def check_desargues(projected):
     o, a, b, x = 4, (2, 15, 12), (6, 16, 8), (5, 14, 1)
     assert r(*a) == r(*b) == 3
     assert all(r(o, a[i], b[i]) == 2 for i in range(3))
+    # Coincident corresponding sides would allow arbitrary intersections.
+    # The explicit planar theorem in the README excludes that degeneracy.
+    assert all(r(o, a[i], a[j]) == 3 for i, j in combinations(range(3), 2)), \
+        "Planar Desargues needs distinct corresponding side lines."
     for k, (i, j) in enumerate(((1, 2), (0, 2), (0, 1))):
         assert r(a[i], a[j], x[k]) == r(b[i], b[j], x[k]) == 2
     assert r(*x) == 3
     print(f"Desargues: O={o}, a={a}, b={b}, x={x}")
+    print("All corresponding side lines are distinct: r(O,ai,aj)=3 for i != j.")
     print("All nine collinear triples have rank 2, but r(x1,x2,x3)=3.")
     print("The restriction is a simple rank-3 matroid; planar AE Desargues is violated.")
 
