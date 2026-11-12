@@ -1,8 +1,8 @@
 {
   "size": [1180, 980],
-  "caption": "Only marked points are elements. The dashed axis is absent: the three side intersections have rank 3.",
+  "caption": "Solid curves record matroid lines. The dashed axis contradicts the data: r({x₁,x₂,x₃}) = 3.",
   "positions": {
-    "1": [995.016501650165, 820.0],
+    "1": [936.6666666666666, 740.0],
     "2": [150.0, 150.0],
     "4": [1000.0, 330.0],
     "5": [91.17647058823529, 740.0],
@@ -64,13 +64,6 @@
     {
       "flat": [1, 2, 15],
       "order": [2, 15, 1],
-      "controls": [
-        null,
-        [
-          [550, 450],
-          [925, 650]
-        ]
-      ],
       "color": "#b0b7c1",
       "width": 1.65
     },
@@ -157,10 +150,9 @@
   ],
   "guides": [
     {
-      "points": [5, 14],
-      "extend": [50, 750],
+      "points": [5, 14, 1],
       "color": "#b53b69",
-      "label": "Missing Desargues axis: x3 is not on the line through x1 and x2"
+      "label": "Apparent collinearity is incompatible with the matroid: r(x1,x2,x3) = 3"
     }
   ],
   "annotations": [
@@ -172,11 +164,11 @@
     },
     {
       "position": [380, 717],
-      "text": "Missing axis of perspectivity",
+      "text": "Axis required by Desargues — absent in the matroid",
       "color": "#b53b69"
     },
     {
-      "position": [770, 875],
+      "position": [770, 825],
       "text": "r({x₁,x₂,x₃}) = 3",
       "color": "#b53b69"
     }

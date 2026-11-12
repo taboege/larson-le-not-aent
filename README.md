@@ -486,14 +486,17 @@ The two triangles have blue and orange outlines and light fills. Their three
 slate-blue perspective lines meet at `O` on the right. The side extensions
 descend toward an axis below the triangles, following the arrangement in
 [Wikipedia's Desargues diagram](https://en.wikipedia.org/wiki/Desargues%27s_theorem).
-The **rose dashed guide shows the missing Desargues axis**: `x_1 = 5` and
-`x_2 = 14` lie on it, while `x_3 = 1` sits visibly below it. Their triple has
-rank three. The dashed guide is an annotation, not a matroid line; the actual
-rank-two flat through `x_1` and `x_2` is `{4,5,14}`, drawn as a light-gray curve.
+The six relevant side extensions are straight, and their three intersection
+points `x_1 = 5`, `x_2 = 14`, and `x_3 = 1` lie on one visual line. The
+**rose dashed guide marks the incompatibility with the matroid data**:
+Desargues requires that axis, but the triple has rank three in the matroid.
+The apparent collinearity is deliberately an annotation, not an incidence.
+The actual rank-two flat through `x_1` and `x_2` is `{4,5,14}`, drawn as a
+light-gray curve.
 
 The triangle boundaries are straight and prominent, while their extensions
-are lighter. Curved extensions record the extra incidences on the two
-four-point lines and the failure of Desargues.
+are lighter. The additional curved pieces record the extra incidences on
+the two four-point lines and the line `{4,5,14}`.
 
 All ten nontrivial rank-two flats are drawn. Following the incidence-diagram
 convention in [O], curves record flats and only marked points are elements;

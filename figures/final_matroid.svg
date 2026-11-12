@@ -6,8 +6,8 @@
 <text x="30" y="67" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Rank 3; 10 elements; 104 bases</text><text x="30" y="67" font-size="17" fill="#172033">Rank 3; 10 elements; 104 bases</text>
 <polygon data-triangle="2 15 12" points="150,150 350,300 250,470" fill="#265eab" fill-opacity="0.10"/>
 <polygon data-triangle="6 16 8" points="571.429,239.244 625,312.692 482.759,426.552" fill="#d17b0f" fill-opacity="0.10"/>
-<path data-flat="1 2 15" d="M 150,150 L 350,300 C 550,450 925,650 995.017,820" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 2 15</title></path>
-<path data-flat="1 6 16" d="M 571.429,239.244 L 625,312.692 L 995.017,820" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 6 16</title></path>
+<path data-flat="1 2 15" d="M 150,150 L 350,300 L 936.667,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 2 15</title></path>
+<path data-flat="1 6 16" d="M 571.429,239.244 L 625,312.692 L 936.667,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 6 16</title></path>
 <path data-flat="2 4 6" d="M 150,150 L 571.429,239.244 L 1000,330" fill="none" stroke="#6384a4" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 4 6</title></path>
 <path data-flat="2 5 8 16" d="M 150,150 C 300,75 720,100 625,312.692 L 482.759,426.552 L 91.1765,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 5 8 16</title></path>
 <path data-flat="2 12 14" d="M 150,150 L 250,470 L 334.375,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 12 14</title></path>
@@ -18,9 +18,9 @@
 <path data-flat="6 8 14" d="M 571.429,239.244 L 482.759,426.552 L 334.375,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 6 8 14</title></path>
 <polygon points="150,150 350,300 250,470" fill="none" stroke="#265eab" stroke-width="3.5" stroke-linejoin="round"/>
 <polygon points="571.429,239.244 625,312.692 482.759,426.552" fill="none" stroke="#d17b0f" stroke-width="3.5" stroke-linejoin="round"/>
-<path data-guide="5 14" d="M 41.1765,740 L 1084.38,740" fill="none" stroke="#b53b69" stroke-width="2.8" stroke-dasharray="9 7" stroke-linecap="round"><title>Missing Desargues axis: x3 is not on the line through x1 and x2</title></path>
-<circle data-point="1" cx="995.017" cy="820" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
-<text x="1007.02" y="845" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">x₃ (1)</text><text x="1007.02" y="845" font-size="18" fill="#172033">x₃ (1)</text>
+<path data-guide="5 14 1" d="M 91.1765,740 L 334.375,740 L 936.667,740" fill="none" stroke="#b53b69" stroke-width="2.8" stroke-dasharray="9 7" stroke-linecap="round"><title>Apparent collinearity is incompatible with the matroid: r(x1,x2,x3) = 3</title></path>
+<circle data-point="1" cx="936.667" cy="740" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
+<text x="948.667" y="765" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">x₃ (1)</text><text x="948.667" y="765" font-size="18" fill="#172033">x₃ (1)</text>
 <circle data-point="2" cx="150" cy="150" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
 <text x="70" y="142" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">a₁ (2)</text><text x="70" y="142" font-size="18" fill="#172033">a₁ (2)</text>
 <circle data-point="4" cx="1000" cy="330" r="5.5" fill="#172033" stroke="white" stroke-width="1.6"/>
@@ -40,8 +40,8 @@
 <circle data-point="16" cx="625" cy="312.692" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
 <text x="635" y="300.692" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">b₂ (16)</text><text x="635" y="300.692" font-size="18" fill="#172033">b₂ (16)</text>
 <text x="1015" y="305" font-size="16" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Center</text><text x="1015" y="305" font-size="16" fill="#6384a4">Center</text>
-<text x="380" y="717" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Missing axis of perspectivity</text><text x="380" y="717" font-size="17" fill="#b53b69">Missing axis of perspectivity</text>
-<text x="770" y="875" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">r({x₁,x₂,x₃}) = 3</text><text x="770" y="875" font-size="17" fill="#b53b69">r({x₁,x₂,x₃}) = 3</text>
+<text x="380" y="717" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Axis required by Desargues — absent in the matroid</text><text x="380" y="717" font-size="17" fill="#b53b69">Axis required by Desargues — absent in the matroid</text>
+<text x="770" y="825" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">r({x₁,x₂,x₃}) = 3</text><text x="770" y="825" font-size="17" fill="#b53b69">r({x₁,x₂,x₃}) = 3</text>
 <path d="M 30,915 h 22" stroke="#265eab" stroke-width="3"/>
 <text x="60" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Triangle a</text><text x="60" y="920" font-size="14" fill="#172033">Triangle a</text>
 <path d="M 310,915 h 22" stroke="#d17b0f" stroke-width="3"/>
@@ -50,6 +50,6 @@
 <text x="620" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Perspective lines</text><text x="620" y="920" font-size="14" fill="#172033">Perspective lines</text>
 <path d="M 870,915 h 22" stroke="#b53b69" stroke-width="3" stroke-dasharray="6 4"/>
 <text x="900" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Missing axis</text><text x="900" y="920" font-size="14" fill="#172033">Missing axis</text>
-<text x="30" y="955" font-size="13" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Only marked points are elements. The dashed axis is absent: the three side intersections have rank 3.</text><text x="30" y="955" font-size="13" fill="#172033">Only marked points are elements. The dashed axis is absent: the three side intersections have rank 3.</text>
+<text x="30" y="955" font-size="13" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Solid curves record matroid lines. The dashed axis contradicts the data: r({x₁,x₂,x₃}) = 3.</text><text x="30" y="955" font-size="13" fill="#172033">Solid curves record matroid lines. The dashed axis contradicts the data: r({x₁,x₂,x₃}) = 3.</text>
 </g>
 </svg>
