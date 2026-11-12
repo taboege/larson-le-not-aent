@@ -180,6 +180,82 @@ algebraic dual `N` is almost entropic. The use of Remark 19 is justified by
 the complete matroid-rank check on the minor, not by an integrality assumption
 on the six intermediate extensions.
 
+## Drawing the matroid
+
+![The final rank-three matroid, with the Desargues triangles highlighted and the missing axis dashed](figures/final_matroid.png)
+
+The two triangles and their side lines are blue and orange, with light fills
+to make the triangles easy to recognize. Their perspective
+lines through `O` are slate blue. The light-gray curve is the additional
+rank-two flat `{4,5,14}`. The **rose dashed curve is the missing Desargues axis**:
+it joins `x_1 = 5`, `x_2 = 14`, and `x_3 = 1` as a guide, but this triple has
+rank three. The dashed curve is not a line of the matroid.
+The triangle boundaries are straight; the bend of the blue `{1,2,15}` line
+is confined to its extension from `a_1` toward `x_3`.
+
+All ten nontrivial rank-two flats are drawn. Following the incidence-diagram
+convention in [O], curves record flats and only marked points are elements;
+unmarked crossings create no additional incidence. This is a schematic
+geometric representation of an abstract matroid. The colored curves need not
+be straight Euclidean lines.
+
+The repository contains the [SVG](figures/final_matroid.svg), a **3000 × 2460
+transparent PNG** ([download](figures/final_matroid.png)), and the complete
+[layout](figures/final_layout.json). The figure uses explicit vector paths
+and hand-placed coordinates; no graph-layout engine is involved.
+
+[`draw_matroid.py`](draw_matroid.py) computes the flats from a complete basis
+list and creates the drawing. SVG generation uses only the Python standard
+library. PNG export additionally uses [CairoSVG](https://cairosvg.org/documentation/);
+install the optional dependency in your virtual environment:
+
+```sh
+python -m pip install ".[drawing]"
+```
+
+CairoSVG requires the Cairo system library; its linked installation guide
+covers platform-specific prerequisites. To reproduce both checked-in images
+from the repository directory, run this command on one line:
+
+```sh
+python draw_matroid.py data/final_matroid.json --layout figures/final_layout.json --output figures/final_matroid.svg --png figures/final_matroid.png --scale 3
+```
+
+After rerunning the LP computation, regenerate the basis data directly from
+its complete rank table with:
+
+```sh
+python draw_matroid.py im_projection_output/projection.csv --write-json data/final_matroid.json --layout figures/final_layout.json --output figures/final_matroid.svg --png figures/final_matroid.png --title "A rank-three Desargues obstruction"
+```
+
+The CSV reader requires exact matching integer bounds, checks the basis
+axioms, and checks that the resulting matroid reproduces every input rank.
+The LP verifier computes everything afresh and never reads this saved basis
+file or the layout.
+
+For other small matroids, supply a JSON file of the following form, with
+integer element labels and **all** bases:
+
+```json
+{"name": "U(3,4)", "ground_set": [1,2,3,4],
+ "bases": [[1,2,3], [1,2,4], [1,3,4], [2,3,4]]}
+```
+
+Then run `python draw_matroid.py your_matroid.json --output your_matroid.svg`.
+The installed `draw-matroid` command is equivalent. A circular layout is used
+by default; a separate layout file can set coordinates, labels, colors, and
+cubic Bezier controls. Solid lines are always computed from the matroid, and
+a layout claiming a nonexistent flat is rejected. Dashed guides are explicitly
+separate annotations.
+
+The renderer supports ranks zero through four, including loops and parallel
+elements. Parallel elements share a labeled point; loops are listed separately.
+For rank four, an overview shows the lines and separate shaded panels show
+every rank-three flat with at least four geometric points. Three-point planes
+are implicit. This makes plane membership explicit without relying on a
+possibly misleading perspective projection. The automatic layout prioritizes
+incidence correctness; a hand-tuned layout improves crowded examples.
+
 ## Install and run
 
 Use Python 3.10 or newer with `pip` and `venv`. The two runtime dependencies are
@@ -311,13 +387,22 @@ On an Intel Core i5-1335U, that run took 73.6 seconds and peaked at 480 MiB of
 resident memory. HiGHS uses one solver thread. Runtime varies with hardware.
 These measurements include recomputing everything from the embedded initial
 matroid and extension triples; no saved results were loaded.
+The figure export was also checked in an isolated environment with CairoSVG
+2.9.1, including its transparent alpha channel.
 
 ## Packaging
 
-This is a single-module distribution using the standard
+This is a small setuptools distribution using the standard
 [`pyproject.toml` format](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)
-and setuptools. `pip install .` installs the module, its dependencies, and the
-`larson-le-verify` command. No separate `setup.py` or dependency list is needed.
+for dependency metadata. `pip install .` installs the verifier, the drawing
+helper, and the `larson-le-verify` and `draw-matroid` commands. PNG rendering
+dependencies are optional. No separate `setup.py` or dependency list is needed.
+
+The drawing and input-validation tests use the standard-library test runner:
+
+```sh
+python -m unittest discover -s tests -v
+```
 
 To build a wheel and source archive for distribution, run these commands in an
 activated virtual environment:
@@ -330,6 +415,8 @@ python -m build
 The files appear in `dist/`. Someone receiving the wheel can install it with
 `python -m pip install path/to/larson_le_verification-0.1.0-py3-none-any.whl`;
 pip will also install its dependencies.
+The source archive additionally includes the Macaulay2 script, basis data,
+layout, both figure formats, and tests.
 
 ## References
 

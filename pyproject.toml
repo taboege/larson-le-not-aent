@@ -19,7 +19,11 @@ classifiers = [
 
 [project.scripts]
 larson-le-verify = "im_projection:cli"
+draw-matroid = "draw_matroid:cli"
+
+[project.optional-dependencies]
+drawing = ["CairoSVG>=2.7.1"]
 
 [tool.setuptools]
-py-modules = ["im_projection"]
+py-modules = ["im_projection", "draw_matroid"]
 include-package-data = false

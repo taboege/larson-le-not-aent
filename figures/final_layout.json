@@ -1,0 +1,54 @@
+{
+  "size": [1000, 820],
+  "caption": "Solid curves: rank-2 flats. Dashed axis: absent (rank 3). Unmarked crossings are not elements.",
+  "positions": {
+    "1": [72, 253.2], "2": [360, 330], "4": [200, 330],
+    "5": [413.3333333333, 223.3333333333], "6": [840, 330],
+    "8": [200, 650], "12": [200, 170], "14": [520, 490],
+    "15": [520, 250], "16": [382.8571428571, 284.2857142857]
+  },
+  "labels": {
+    "1": "1 = x₃", "2": "2 = a₁", "4": "4 = O", "5": "5 = x₁",
+    "6": "6 = b₁", "8": "8 = b₃", "12": "12 = a₃", "14": "14 = x₂",
+    "15": "15 = a₂", "16": "16 = b₂"
+  },
+  "label_offsets": {
+    "1": [-55, -19], "2": [8, 24], "4": [-70, 8], "5": [6, -24],
+    "6": [15, 6], "8": [12, 23], "12": [8, -14], "14": [12, 20],
+    "15": [10, -12], "16": [-80, -10]
+  },
+  "point_colors": {
+    "1": "#b53b69", "5": "#b53b69", "14": "#b53b69",
+    "2": "#265eab", "15": "#265eab", "12": "#265eab",
+    "6": "#d17b0f", "16": "#d17b0f", "8": "#d17b0f"
+  },
+  "triangles": [
+    {"points": [2, 15, 12], "color": "#265eab"},
+    {"points": [6, 16, 8], "color": "#d17b0f"}
+  ],
+  "lines": [
+    {"flat": [1, 2, 15], "order": [15, 2, 1], "color": "#265eab",
+      "controls": [null, [[220, 400], [68, 380]]]},
+    {"flat": [1, 6, 16], "color": "#d17b0f"},
+    {"flat": [2, 4, 6], "color": "#7d97b0"},
+    {"flat": [2, 5, 8, 16], "color": "#d17b0f"},
+    {"flat": [2, 12, 14], "color": "#265eab"},
+    {"flat": [4, 5, 14], "order": [4, 5, 14], "color": "#b4bbc5",
+      "controls": [null, [[665, 150], [700, 440]]]},
+    {"flat": [4, 8, 12], "color": "#7d97b0"},
+    {"flat": [4, 15, 16], "color": "#7d97b0"},
+    {"flat": [5, 6, 12, 15], "color": "#265eab"},
+    {"flat": [6, 8, 14], "color": "#d17b0f"}
+  ],
+  "guides": [
+    {"points": [1, 5, 14], "color": "#b53b69",
+      "controls": [[[125, 65], [335, 85]], [[505, 385], [585, 460]]],
+      "label": "Missing Desargues axis: {1,5,14} has rank 3, not 2"}
+  ],
+  "legend": [
+    {"label": "Triangle a", "color": "#265eab"},
+    {"label": "Triangle b", "color": "#d17b0f"},
+    {"label": "Perspective lines", "color": "#7d97b0"},
+    {"label": "Missing axis", "color": "#b53b69", "dashed": true}
+  ]
+}

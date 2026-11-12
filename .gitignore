@@ -6,3 +6,7 @@ build/
 dist/
 im_projection_output/
 algebraic_output/
+/dual_bases.csv
+/dual_nonbases.csv
+/eliminations.tsv
+/kernel.m2
