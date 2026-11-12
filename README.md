@@ -494,9 +494,12 @@ The apparent collinearity is deliberately an annotation, not an incidence.
 The actual rank-two flat through `x_1` and `x_2` is `{4,5,14}`, drawn as a
 light-gray curve.
 
-The triangle boundaries are straight and prominent, while their extensions
-are lighter. The additional curved pieces record the extra incidences on
-the two four-point lines and the line `{4,5,14}`.
+The triangle boundaries are straight and prominent. Soft green and violet
+strokes follow the complete four-point lines `{2,5,8,16}` and `{5,6,12,15}`,
+respectively, including their portions along triangle edges. Their curved
+and straight pieces meet with matching tangent directions, so each full
+line can be followed through all four points. The light-gray line
+`{4,5,14}` also passes smoothly through its middle point `x_2`.
 
 All ten nontrivial rank-two flats are drawn. Following the incidence-diagram
 convention in [O], curves record flats and only marked points are elements;
