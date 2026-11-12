@@ -91,8 +91,13 @@ class DrawMatroidTests(unittest.TestCase):
         guides = root.findall(".//s:path[@data-guide]", SVG)
         self.assertEqual(len(guides), 1)
         axis = frozenset(map(int, guides[0].attrib["data-guide"].split()))
-        self.assertEqual(axis, frozenset([1, 5, 14]))
-        self.assertEqual(matroid.rank(axis), 3)
+        self.assertEqual(axis, frozenset([5, 14]))
+        self.assertEqual(matroid.rank(axis), 2)
+        self.assertEqual(matroid.rank(axis | {1}), 3)
+        # The two guide points share a horizontal axis; the third is visibly off it.
+        positions = layout["positions"]
+        self.assertEqual(positions["5"][1], positions["14"][1])
+        self.assertGreater(positions["1"][1] - positions["5"][1], 50)
         self.assertIn("stroke-dasharray", guides[0].attrib)
         triangles = root.findall(".//s:polygon[@data-triangle]", SVG)
         self.assertEqual({frozenset(map(int, p.attrib["data-triangle"].split())) for p in triangles},
@@ -107,7 +112,7 @@ class DrawMatroidTests(unittest.TestCase):
         data = (ROOT / "figures/final_matroid.png").read_bytes()
         self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
         width, height, depth, color, _, _, _ = struct.unpack(">IIBBBBB", data[16:29])
-        self.assertEqual((width, height, depth, color), (3000, 2460, 8, 6))
+        self.assertEqual((width, height, depth, color), (3540, 2940, 8, 6))
 
 
 if __name__ == "__main__":

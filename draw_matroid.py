@@ -121,9 +121,10 @@ def line_path(order, positions, controls=None):
     return " ".join(commands)
 
 
-def svg_text(x, y, value, size=17, color="#172033", halo=False):
+def svg_text(x, y, value, size=17, color="#172033", halo=True):
     attributes = f'x="{x:g}" y="{y:g}" font-size="{size}"'
     content = escape(str(value))
+    # A white halo keeps text readable over light or dark backgrounds.
     # Two layers work in SVG renderers that do not implement paint-order.
     outline = (f'<text {attributes} fill="none" stroke="white" stroke-width="5" '
                f'stroke-linejoin="round">{content}</text>') if halo else ""
@@ -191,16 +192,41 @@ def draw_svg(matroid, layout=None):
                 raise ValueError("A curve's order must contain exactly the points of its flat.")
             path = line_path(order, coords, style.get("controls"))
             color = escape(style.get("color", "#64748b"))
+            line_width = float(style.get("width", 2.6))
+            if not math.isfinite(line_width) or line_width <= 0:
+                raise ValueError("Line widths must be positive and finite.")
             members = " ".join(map(str, sorted(line)))
             svg.append(f'<path data-flat="{members}" d="{path}" fill="none" '
-                       f'stroke="{color}" stroke-width="2.6" stroke-linejoin="round" '
+                       f'stroke="{color}" stroke-width="{line_width:g}" stroke-linejoin="round" '
                        f'stroke-linecap="round"><title>Rank-two flat: {members}</title></path>')
         if custom:
+            # Outlines distinguish the triangle sides from their extensions.
+            for triangle in layout.get("triangles", []):
+                if triangle.get("outline"):
+                    vertices = triangle["points"]
+                    polygon = " ".join(f"{coords[p][0]:g},{coords[p][1]:g}" for p in vertices)
+                    color = escape(triangle["color"])
+                    svg.append(f'<polygon points="{polygon}" fill="none" stroke="{color}" '
+                               'stroke-width="3.5" stroke-linejoin="round"/>')
             for guide in layout.get("guides", []):
                 order = guide["points"]
                 if len(order) < 2 or len(set(order)) != len(order) or not set(order) <= set(points):
                     raise ValueError("A dashed guide needs distinct known points.")
                 path = line_path(order, coords, guide.get("controls"))
+                if "extend" in guide:
+                    if len(order) != 2 or guide.get("controls"):
+                        raise ValueError("Only a straight two-point guide can be extended.")
+                    before, after = xy(guide["extend"])
+                    if min(before, after) < 0:
+                        raise ValueError("Guide extension lengths must be nonnegative.")
+                    a, b = (coords[p] for p in order)
+                    distance = math.dist(a, b)
+                    if distance == 0:
+                        raise ValueError("A straight guide needs distinct positions.")
+                    direction = tuple((b[i] - a[i]) / distance for i in range(2))
+                    start = tuple(a[i] - before * direction[i] for i in range(2))
+                    end = tuple(b[i] + after * direction[i] for i in range(2))
+                    path = f"M {start[0]:g},{start[1]:g} L {end[0]:g},{end[1]:g}"
                 color = escape(guide.get("color", "#be3455"))
                 members = " ".join(map(str, order))
                 svg.append(f'<path data-guide="{members}" d="{path}" fill="none" '
@@ -216,6 +242,10 @@ def draw_svg(matroid, layout=None):
                                 18 if custom else 14, halo=True))
 
     panel(representatives, positions, lines, custom=True)
+    for annotation in layout.get("annotations", []):
+        x, y = xy(annotation["position"])
+        svg.append(svg_text(x, y, annotation["text"], annotation.get("size", 17),
+                            annotation.get("color", "#172033"), halo=True))
     if loops:
         svg.append(svg_text(30, main_height - 110, "Loops: " + ", ".join(map(str, sorted(loops)))))
     legend = layout.get("legend", [])

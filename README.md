@@ -184,22 +184,26 @@ on the six intermediate extensions.
 
 ![The final rank-three matroid, with the Desargues triangles highlighted and the missing axis dashed](figures/final_matroid.png)
 
-The two triangles and their side lines are blue and orange, with light fills
-to make the triangles easy to recognize. Their perspective
-lines through `O` are slate blue. The light-gray curve is the additional
-rank-two flat `{4,5,14}`. The **rose dashed curve is the missing Desargues axis**:
-it joins `x_1 = 5`, `x_2 = 14`, and `x_3 = 1` as a guide, but this triple has
-rank three. The dashed curve is not a line of the matroid.
-The triangle boundaries are straight; the bend of the blue `{1,2,15}` line
-is confined to its extension from `a_1` toward `x_3`.
+The two triangles have blue and orange outlines and light fills. Their three
+slate-blue perspective lines meet at `O` on the right. The side extensions
+descend toward an axis below the triangles, following the arrangement in
+[Wikipedia's Desargues diagram](https://en.wikipedia.org/wiki/Desargues%27s_theorem).
+The **rose dashed guide shows the missing Desargues axis**: `x_1 = 5` and
+`x_2 = 14` lie on it, while `x_3 = 1` sits visibly below it. Their triple has
+rank three. The dashed guide is an annotation, not a matroid line; the actual
+rank-two flat through `x_1` and `x_2` is `{4,5,14}`, drawn as a light-gray curve.
+
+The triangle boundaries are straight and prominent, while their extensions
+are lighter. Curved extensions record the extra incidences on the two
+four-point lines and the failure of Desargues.
 
 All ten nontrivial rank-two flats are drawn. Following the incidence-diagram
 convention in [O], curves record flats and only marked points are elements;
 unmarked crossings create no additional incidence. This is a schematic
-geometric representation of an abstract matroid. The colored curves need not
+geometric representation of an abstract matroid. The curves need not
 be straight Euclidean lines.
 
-The repository contains the [SVG](figures/final_matroid.svg), a **3000 × 2460
+The repository contains the [SVG](figures/final_matroid.svg), a **3540 × 2940
 transparent PNG** ([download](figures/final_matroid.png)), and the complete
 [layout](figures/final_layout.json). The figure uses explicit vector paths
 and hand-placed coordinates; no graph-layout engine is involved.
@@ -255,6 +259,9 @@ every rank-three flat with at least four geometric points. Three-point planes
 are implicit. This makes plane membership explicit without relying on a
 possibly misleading perspective projection. The automatic layout prioritizes
 incidence correctness; a hand-tuned layout improves crowded examples.
+The renderer contains no Desargues-specific logic or fixed element labels. All
+presentation choices for this example are in `figures/final_layout.json`;
+its Desargues rank checks belong to the verifier and the example's tests.
 
 ## Install and run
 

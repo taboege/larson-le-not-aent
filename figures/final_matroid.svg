@@ -1,50 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="820" viewBox="0 0 1000 820" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="980" viewBox="0 0 1180 980" role="img">
 <title>A rank-three Desargues obstruction</title>
 <desc>Matroid incidence diagram. Only marked points are elements. Curves mark rank-two flats; rank-four plane panels mark rank-three flats.</desc>
 <g font-family="DejaVu Sans, sans-serif">
-<text x="30" y="38" font-size="25" fill="#172033">A rank-three Desargues obstruction</text>
-<text x="30" y="67" font-size="17" fill="#172033">Rank 3; 10 elements; 104 bases</text>
-<polygon data-triangle="2 15 12" points="360,330 520,250 200,170" fill="#265eab" fill-opacity="0.10"/>
-<polygon data-triangle="6 16 8" points="840,330 382.857,284.286 200,650" fill="#d17b0f" fill-opacity="0.10"/>
-<path data-flat="1 2 15" d="M 520,250 L 360,330 C 220,400 68,380 72,253.2" fill="none" stroke="#265eab" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 2 15</title></path>
-<path data-flat="1 6 16" d="M 72,253.2 L 382.857,284.286 L 840,330" fill="none" stroke="#d17b0f" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 6 16</title></path>
-<path data-flat="2 4 6" d="M 200,330 L 360,330 L 840,330" fill="none" stroke="#7d97b0" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 4 6</title></path>
-<path data-flat="2 5 8 16" d="M 200,650 L 360,330 L 382.857,284.286 L 413.333,223.333" fill="none" stroke="#d17b0f" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 5 8 16</title></path>
-<path data-flat="2 12 14" d="M 200,170 L 360,330 L 520,490" fill="none" stroke="#265eab" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 12 14</title></path>
-<path data-flat="4 5 14" d="M 200,330 L 413.333,223.333 C 665,150 700,440 520,490" fill="none" stroke="#b4bbc5" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 5 14</title></path>
-<path data-flat="4 8 12" d="M 200,170 L 200,330 L 200,650" fill="none" stroke="#7d97b0" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 8 12</title></path>
-<path data-flat="4 15 16" d="M 200,330 L 382.857,284.286 L 520,250" fill="none" stroke="#7d97b0" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 15 16</title></path>
-<path data-flat="5 6 12 15" d="M 200,170 L 413.333,223.333 L 520,250 L 840,330" fill="none" stroke="#265eab" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 5 6 12 15</title></path>
-<path data-flat="6 8 14" d="M 200,650 L 520,490 L 840,330" fill="none" stroke="#d17b0f" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 6 8 14</title></path>
-<path data-guide="1 5 14" d="M 72,253.2 C 125,65 335,85 413.333,223.333 C 505,385 585,460 520,490" fill="none" stroke="#b53b69" stroke-width="2.8" stroke-dasharray="9 7" stroke-linecap="round"><title>Missing Desargues axis: {1,5,14} has rank 3, not 2</title></path>
-<circle data-point="1" cx="72" cy="253.2" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
-<text x="17" y="234.2" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">1 = x₃</text><text x="17" y="234.2" font-size="18" fill="#172033">1 = x₃</text>
-<circle data-point="2" cx="360" cy="330" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
-<text x="368" y="354" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">2 = a₁</text><text x="368" y="354" font-size="18" fill="#172033">2 = a₁</text>
-<circle data-point="4" cx="200" cy="330" r="5.5" fill="#172033" stroke="white" stroke-width="1.6"/>
-<text x="130" y="338" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">4 = O</text><text x="130" y="338" font-size="18" fill="#172033">4 = O</text>
-<circle data-point="5" cx="413.333" cy="223.333" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
-<text x="419.333" y="199.333" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">5 = x₁</text><text x="419.333" y="199.333" font-size="18" fill="#172033">5 = x₁</text>
-<circle data-point="6" cx="840" cy="330" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
-<text x="855" y="336" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">6 = b₁</text><text x="855" y="336" font-size="18" fill="#172033">6 = b₁</text>
-<circle data-point="8" cx="200" cy="650" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
-<text x="212" y="673" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">8 = b₃</text><text x="212" y="673" font-size="18" fill="#172033">8 = b₃</text>
-<circle data-point="12" cx="200" cy="170" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
-<text x="208" y="156" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">12 = a₃</text><text x="208" y="156" font-size="18" fill="#172033">12 = a₃</text>
-<circle data-point="14" cx="520" cy="490" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
-<text x="532" y="510" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">14 = x₂</text><text x="532" y="510" font-size="18" fill="#172033">14 = x₂</text>
-<circle data-point="15" cx="520" cy="250" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
-<text x="530" y="238" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">15 = a₂</text><text x="530" y="238" font-size="18" fill="#172033">15 = a₂</text>
-<circle data-point="16" cx="382.857" cy="284.286" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
-<text x="302.857" y="274.286" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">16 = b₂</text><text x="302.857" y="274.286" font-size="18" fill="#172033">16 = b₂</text>
-<path d="M 30,755 h 22" stroke="#265eab" stroke-width="3"/>
-<text x="60" y="760" font-size="14" fill="#172033">Triangle a</text>
-<path d="M 265,755 h 22" stroke="#d17b0f" stroke-width="3"/>
-<text x="295" y="760" font-size="14" fill="#172033">Triangle b</text>
-<path d="M 500,755 h 22" stroke="#7d97b0" stroke-width="3"/>
-<text x="530" y="760" font-size="14" fill="#172033">Perspective lines</text>
-<path d="M 735,755 h 22" stroke="#b53b69" stroke-width="3" stroke-dasharray="6 4"/>
-<text x="765" y="760" font-size="14" fill="#172033">Missing axis</text>
-<text x="30" y="795" font-size="13" fill="#172033">Solid curves: rank-2 flats. Dashed axis: absent (rank 3). Unmarked crossings are not elements.</text>
+<text x="30" y="38" font-size="25" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">A rank-three Desargues obstruction</text><text x="30" y="38" font-size="25" fill="#172033">A rank-three Desargues obstruction</text>
+<text x="30" y="67" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Rank 3; 10 elements; 104 bases</text><text x="30" y="67" font-size="17" fill="#172033">Rank 3; 10 elements; 104 bases</text>
+<polygon data-triangle="2 15 12" points="150,150 350,300 250,470" fill="#265eab" fill-opacity="0.10"/>
+<polygon data-triangle="6 16 8" points="571.429,239.244 625,312.692 482.759,426.552" fill="#d17b0f" fill-opacity="0.10"/>
+<path data-flat="1 2 15" d="M 150,150 L 350,300 C 550,450 925,650 995.017,820" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 2 15</title></path>
+<path data-flat="1 6 16" d="M 571.429,239.244 L 625,312.692 L 995.017,820" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 1 6 16</title></path>
+<path data-flat="2 4 6" d="M 150,150 L 571.429,239.244 L 1000,330" fill="none" stroke="#6384a4" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 4 6</title></path>
+<path data-flat="2 5 8 16" d="M 150,150 C 300,75 720,100 625,312.692 L 482.759,426.552 L 91.1765,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 5 8 16</title></path>
+<path data-flat="2 12 14" d="M 150,150 L 250,470 L 334.375,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 2 12 14</title></path>
+<path data-flat="4 5 14" d="M 91.1765,740 C 150,870 280,870 334.375,740 C 730,900 1110,780 1000,330" fill="none" stroke="#c8cdd4" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 5 14</title></path>
+<path data-flat="4 8 12" d="M 250,470 L 482.759,426.552 L 1000,330" fill="none" stroke="#6384a4" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 8 12</title></path>
+<path data-flat="4 15 16" d="M 350,300 L 625,312.692 L 1000,330" fill="none" stroke="#6384a4" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 4 15 16</title></path>
+<path data-flat="5 6 12 15" d="M 571.429,239.244 C 550,80 390,100 350,300 L 250,470 L 91.1765,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 5 6 12 15</title></path>
+<path data-flat="6 8 14" d="M 571.429,239.244 L 482.759,426.552 L 334.375,740" fill="none" stroke="#b0b7c1" stroke-width="1.65" stroke-linejoin="round" stroke-linecap="round"><title>Rank-two flat: 6 8 14</title></path>
+<polygon points="150,150 350,300 250,470" fill="none" stroke="#265eab" stroke-width="3.5" stroke-linejoin="round"/>
+<polygon points="571.429,239.244 625,312.692 482.759,426.552" fill="none" stroke="#d17b0f" stroke-width="3.5" stroke-linejoin="round"/>
+<path data-guide="5 14" d="M 41.1765,740 L 1084.38,740" fill="none" stroke="#b53b69" stroke-width="2.8" stroke-dasharray="9 7" stroke-linecap="round"><title>Missing Desargues axis: x3 is not on the line through x1 and x2</title></path>
+<circle data-point="1" cx="995.017" cy="820" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
+<text x="1007.02" y="845" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">x₃ (1)</text><text x="1007.02" y="845" font-size="18" fill="#172033">x₃ (1)</text>
+<circle data-point="2" cx="150" cy="150" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
+<text x="70" y="142" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">a₁ (2)</text><text x="70" y="142" font-size="18" fill="#172033">a₁ (2)</text>
+<circle data-point="4" cx="1000" cy="330" r="5.5" fill="#172033" stroke="white" stroke-width="1.6"/>
+<text x="1015" y="355" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">O (4)</text><text x="1015" y="355" font-size="18" fill="#172033">O (4)</text>
+<circle data-point="5" cx="91.1765" cy="740" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
+<text x="61.1765" y="722" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">x₁ (5)</text><text x="61.1765" y="722" font-size="18" fill="#172033">x₁ (5)</text>
+<circle data-point="6" cx="571.429" cy="239.244" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
+<text x="579.429" y="222.244" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">b₁ (6)</text><text x="579.429" y="222.244" font-size="18" fill="#172033">b₁ (6)</text>
+<circle data-point="8" cx="482.759" cy="426.552" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
+<text x="494.759" y="449.552" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">b₃ (8)</text><text x="494.759" y="449.552" font-size="18" fill="#172033">b₃ (8)</text>
+<circle data-point="12" cx="250" cy="470" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
+<text x="170" y="475" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">a₃ (12)</text><text x="170" y="475" font-size="18" fill="#172033">a₃ (12)</text>
+<circle data-point="14" cx="334.375" cy="740" r="5.5" fill="#b53b69" stroke="white" stroke-width="1.6"/>
+<text x="319.375" y="722" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">x₂ (14)</text><text x="319.375" y="722" font-size="18" fill="#172033">x₂ (14)</text>
+<circle data-point="15" cx="350" cy="300" r="5.5" fill="#265eab" stroke="white" stroke-width="1.6"/>
+<text x="265" y="308" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">a₂ (15)</text><text x="265" y="308" font-size="18" fill="#172033">a₂ (15)</text>
+<circle data-point="16" cx="625" cy="312.692" r="5.5" fill="#d17b0f" stroke="white" stroke-width="1.6"/>
+<text x="635" y="300.692" font-size="18" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">b₂ (16)</text><text x="635" y="300.692" font-size="18" fill="#172033">b₂ (16)</text>
+<text x="1015" y="305" font-size="16" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Center</text><text x="1015" y="305" font-size="16" fill="#6384a4">Center</text>
+<text x="380" y="717" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Missing axis of perspectivity</text><text x="380" y="717" font-size="17" fill="#b53b69">Missing axis of perspectivity</text>
+<text x="770" y="875" font-size="17" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">r({x₁,x₂,x₃}) = 3</text><text x="770" y="875" font-size="17" fill="#b53b69">r({x₁,x₂,x₃}) = 3</text>
+<path d="M 30,915 h 22" stroke="#265eab" stroke-width="3"/>
+<text x="60" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Triangle a</text><text x="60" y="920" font-size="14" fill="#172033">Triangle a</text>
+<path d="M 310,915 h 22" stroke="#d17b0f" stroke-width="3"/>
+<text x="340" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Triangle b</text><text x="340" y="920" font-size="14" fill="#172033">Triangle b</text>
+<path d="M 590,915 h 22" stroke="#6384a4" stroke-width="3"/>
+<text x="620" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Perspective lines</text><text x="620" y="920" font-size="14" fill="#172033">Perspective lines</text>
+<path d="M 870,915 h 22" stroke="#b53b69" stroke-width="3" stroke-dasharray="6 4"/>
+<text x="900" y="920" font-size="14" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Missing axis</text><text x="900" y="920" font-size="14" fill="#172033">Missing axis</text>
+<text x="30" y="955" font-size="13" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round">Only marked points are elements. The dashed axis is absent: the three side intersections have rank 3.</text><text x="30" y="955" font-size="13" fill="#172033">Only marked points are elements. The dashed axis is absent: the three side intersections have rank 3.</text>
 </g>
 </svg>
