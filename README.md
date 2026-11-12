@@ -107,6 +107,40 @@ conditions for almost entropicity. Relevant papers are:
 * Geva Yashfe, [*On the recognition problem for limits of entropy functions*](https://arxiv.org/abs/2509.06302),
   Theorem 18 and Remark 19, for planar Desargues.
 
+## Independent algebraic representation check
+
+[`algebraic_dual.m2`](algebraic_dual.m2) starts directly from the ten functions in
+Larson-Le, Example 1.3. It computes all bases of their rank-six algebraic matroid
+and then its rank-four dual. It does not read the Python non-basis list.
+
+This optional check requires [Macaulay2](https://macaulay2.com/) with its
+[`Matroids` package](https://macaulay2.com/doc/Macaulay2/share/doc/Macaulay2/Matroids/html/index.html),
+installed separately from the Python dependencies. From the repository directory:
+
+```sh
+mkdir -p algebraic_output
+cd algebraic_output
+M2 --script ../algebraic_dual.m2
+cd ..
+```
+
+The script forms the graph ideal `(x_i - f_i(t))` over the field with two
+elements and eliminates all six parameters. For each of the 210 six-subsets
+of the output coordinates, it eliminates the four complementary coordinates.
+The resulting ideal is zero exactly when that six-subset is algebraically
+independent. This tests algebraic independence directly, including inseparable
+dependencies in characteristic two. The `Matroids` package constructs the
+matroid from these bases, checks it, and takes its dual.
+
+Outputs in `algebraic_output/` are:
+
+* `dual_bases.csv`: all 190 bases of the dual, using the paper's labels 1 through 10.
+* `dual_nonbases.csv`: its 20 non-bases, which agree with `NONBASES` in the verifier.
+* `kernel.m2`: the eliminated ideal of relations among the ten functions.
+* `eliminations.tsv`: all 210 independence tests and their elimination ideals.
+
+This computation was checked with Macaulay2 1.25.11 and Matroids 1.7.0.
+
 ## Tested environment and resources
 
 A fresh installation on Linux x86-64 with Python 3.13.9, NumPy 2.5.4, and
