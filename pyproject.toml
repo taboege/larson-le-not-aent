@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "larson-le-verification"
+version = "0.1.0"
+description = "LP verification of six IM extensions and a Desargues violation for Larson-Le's dual"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26.4,<3",
+    "highspy==1.16.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.scripts]
+larson-le-verify = "im_projection:cli"
+
+[tool.setuptools]
+py-modules = ["im_projection"]
+include-package-data = false
