@@ -1,4 +1,4 @@
 include algebraic_dual.m2
 recursive-include data *.json
-recursive-include figures *.json *.svg *.png
+recursive-include figures *.json *.svg *.png *.html
 recursive-include tests *.py

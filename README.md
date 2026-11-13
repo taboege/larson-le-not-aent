@@ -99,6 +99,9 @@ almost-entropic extension supplied by the theorem. Fractional possibilities
 remain in the LP whenever their ranks are not forced. There is no branching
 over integral matroid extensions.
 
+The [spatial drawing below](#spatial-drawing-of-the-rank-four-matroid) shows
+all six triples and their common points together with the original planes.
+
 ### The exact minor
 
 Let `h_6` be the extension on `{1,...,16}`. Contract element **13** and restrict
@@ -486,6 +489,79 @@ ignored. The verifier explicitly rejects it. Our proof above supplies the
 nondegenerate version actually used here directly from the copy lemma,
 the rank-four theorem, and the three-line extension property.
 
+## Spatial drawing of the rank-four matroid
+
+![All twelve original circuit planes and all six IM constructions in one spatial schematic](figures/rank4_original.svg)
+
+The single figure draws all 12 rank-three flats containing at least four
+original points, labeled A–L, and all six IM points. Original elements are
+filled black dots; added points are open colored circles. Each added point
+shares its color with its three generating lines. The line through 5 and 6
+contains both 12 and 15, so it alternates their two colors. Faint grids and
+the order of overlapping sheets indicate their different spatial angles;
+gaps at unmarked line crossings show which line passes behind.
+
+The starting matroid has no three-point lines. Its **20 four-element circuits**
+are exactly the four-element subsets of the 12 planes shown. Each five-point
+plane contains five such circuits. Its **140 five-element circuits** are
+exactly the five-element sets containing none of those four-element circuits.
+This describes every circuit without drawing 140 overlapping spanning sets.
+The complete circuit list is also embedded in the SVG's `matroid-circuits`
+metadata, computed from the basis data when the figure is generated.
+
+The rational spatial coordinates realize the matroid obtained by declaring
+`{6,7,8,10}` a basis. Every other rank of an original subset is correct in
+those coordinates. Restoring that set as an abstract plane therefore requires
+the curved sheet: the picture is an incidence schematic, not a linear
+representation of `D`.
+
+For the selected IM incidences, 17 of the 18 line uses and 17 of the 18
+pairwise plane uses are straight or flat in the spatial coordinates. The
+exception is step 4: the line through
+`7,14,10` curves within the ordinary plane `{4,5,7,10}` and also belongs to
+the curved sheet L, `{6,7,8,10}`. All three lines of that color meet at 14.
+Only this one original plane needs to be curved.
+
+The added points display only the selected, forced incidences. They do not
+choose integral completions or assert that the intermediate polymatroids
+are matroids. Within each color, the three lines together have rank four,
+while every pair has union rank three. Unmarked crossings are not elements.
+
+Download the self-contained [interactive viewer](figures/rank4_interactive.html)
+and open it in a browser to rotate the diagram, move between steps, and
+isolate any of the three planes. Its **Original** view also allows selection
+of each of the original 12 planes. It works offline and can export the current
+view as an SVG. The combined static figure is available as
+[SVG](figures/rank4_original.svg) and [PNG](figures/rank4_original.png), both
+with a white background.
+
+[`draw_im_steps.py`](draw_im_steps.py) reads the complete
+[original basis data](data/dual_matroid.json), the
+[selected extension incidences](data/im_steps.json), and a separate
+[spatial layout](figures/im_spatial_layout.json). It checks the rational
+coordinates against every original subset of size at most four, and checks
+every displayed line and plane, allowing only the explicitly declared curved
+exceptions. It enumerates every original circuit and checks the description
+used in the caption. The display data are extracted from the verifier's exact
+LP bounds; the drawing program does not replace the LP verification.
+
+With the optional drawing dependency installed, regenerate the single SVG,
+PNG, and HTML viewer from the checked-in display data:
+
+```sh
+python draw_im_steps.py data/dual_matroid.json data/im_steps.json --layout figures/im_spatial_layout.json --output figures --png
+```
+
+After rerunning the verifier, regenerate the display data directly from its
+output instead:
+
+```sh
+python draw_im_steps.py data/dual_matroid.json im_projection_output/extensions.json --layout figures/im_spatial_layout.json --write-steps data/im_steps.json --output figures --png
+```
+
+Without `--png`, generation needs only Python's standard library. The installed
+`draw-im-steps` command is equivalent. The PNG uses a scale of two by default.
+
 ## Drawing the matroid
 
 ![The final rank-three matroid, with the Desargues triangles highlighted and the missing axis dashed](figures/final_matroid.png)
@@ -714,8 +790,9 @@ The figure export was also checked in an isolated environment with CairoSVG
 This is a small setuptools distribution using the standard
 [`pyproject.toml` format](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)
 for dependency metadata. `pip install .` installs the verifier, the drawing
-helper, and the `larson-le-verify` and `draw-matroid` commands. PNG rendering
-dependencies are optional. No separate `setup.py` or dependency list is needed.
+helpers, and the `larson-le-verify`, `draw-matroid`, and `draw-im-steps` commands.
+PNG rendering dependencies are optional. No separate `setup.py` or dependency
+list is needed.
 
 The drawing, input-validation, and planar-theorem tests use the
 standard-library test runner:
@@ -736,7 +813,7 @@ The files appear in `dist/`. Someone receiving the wheel can install it with
 `python -m pip install path/to/larson_le_verification-0.1.0-py3-none-any.whl`;
 pip will also install its dependencies.
 The source archive additionally includes the Macaulay2 script, basis data,
-layout, both figure formats, and tests.
+layouts, SVG and PNG figures, the offline HTML viewer, and tests.
 
 ## References
 
