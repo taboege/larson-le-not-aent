@@ -209,14 +209,14 @@ $$
 
 Assume both triangles have rank three, and assume
 
-$$
+```math
 \begin{aligned}
 r(O,a_i,b_i)&=2 &&(i=1,2,3),\\
 r(a_2,a_3,x_1)&=r(b_2,b_3,x_1)=2,\\
 r(a_1,a_3,x_2)&=r(b_1,b_3,x_2)=2,\\
 r(O,a_i,a_j)&=3 &&(1\leq i<j\leq3).
 \end{aligned}
-$$
+```
 
 Then an almost-entropic polymatroid extension contains a point `z` with
 
@@ -282,13 +282,13 @@ $$
 
 Each has rank two. The original and copied incidences give
 
-$$
+```math
 \begin{aligned}
 h(L_1L_2)&=h(O,a_2,a_2')=3,\\
 h(L_1L_3)&=h(a_3,a_2,a_2')=3,\\
 h(L_2L_3)&=h(b_3,b_2,b_2')=3.
 \end{aligned}
-$$
+```
 
 For example, `a_2,b_2` recover `O`, and the lines through `O` recover the
 other endpoints, proving the first closure equality. The others use `a_3`
@@ -297,9 +297,9 @@ and `b_3` in the same way. The union of all three lines spans
 therefore supplies a rank-one point
 
 $$
-p\in\operatorname{cl}(a_2,a_2')
- \cap\operatorname{cl}(b_2,b_2')
- \cap\operatorname{cl}(x_1,x_1').
+p\in\mathrm{cl}(a_2,a_2')
+ \cap\mathrm{cl}(b_2,b_2')
+ \cap\mathrm{cl}(x_1,x_1').
 $$
 
 We will need `h(p,a_2)=h(p,a_2')=2`. Both follow from diminishing returns,
@@ -344,9 +344,9 @@ $$
 The theorem supplies a rank-one point
 
 $$
-q\in\operatorname{cl}(a_1,a_2')
- \cap\operatorname{cl}(b_1,b_2')
- \cap\operatorname{cl}(x_2,x_1'),
+q\in\mathrm{cl}(a_1,a_2')
+ \cap\mathrm{cl}(b_1,b_2')
+ \cap\mathrm{cl}(x_2,x_1'),
 $$
 
 and includes the conclusion `h(q,a_2')=2` (also `h(q,b_2')=2`).
@@ -358,8 +358,8 @@ First, `h(p,q)=2`. Indeed, the equalities
 `h(p,a_2')=h(q,a_2')=2` imply
 
 $$
-a_2\in\operatorname{cl}(p,a_2'),\qquad
-a_1\in\operatorname{cl}(q,a_2').
+a_2\in\mathrm{cl}(p,a_2'),\qquad
+a_1\in\mathrm{cl}(q,a_2').
 $$
 
 Thus `h(p,q,a_2') >= h(a_1,a_2,a_2') = 3`, and subadditivity gives
@@ -381,9 +381,9 @@ is outside it, so `h(A B P)=4`.
 A second three-line extension supplies a rank-one point
 
 $$
-z\in\operatorname{cl}(a_1,a_2)
- \cap\operatorname{cl}(b_1,b_2)
- \cap\operatorname{cl}(p,q).
+z\in\mathrm{cl}(a_1,a_2)
+ \cap\mathrm{cl}(b_1,b_2)
+ \cap\mathrm{cl}(p,q).
 $$
 
 In particular, `z` is in the closure of the old plane.
