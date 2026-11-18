@@ -26,7 +26,7 @@ class DrawIMStepsTests(unittest.TestCase):
         cls.drawing = SpatialDrawing(cls.matroid, cls.steps, cls.layout)
 
     def test_display_inputs_match_the_verifiers_inputs(self):
-        # Read only the literal inputs, without importing the LP solver.
+        # Read only the literal inputs, without running the verification.
         module = ast.parse((ROOT / "im_projection.py").read_text())
         inputs = {node.targets[0].id: ast.literal_eval(node.value) for node in module.body
                   if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)

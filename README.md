@@ -10,13 +10,14 @@ point no human has read this program and verified that it is correctly implement
 
 One Python program recomputes six Ingleton-Main (IM) extensions of Larson-Le's
 rank-four dual matroid, contracts one element, and determines all 1,024 ranks
-of a ten-element restriction by linear programming. It then checks the matroid
+of a ten-element restriction by exact rank inequalities. It then checks the matroid
 rank axioms and a violation of planar Desargues. Together with the mathematical
 extension and minor theorems described below, this certifies that the starting
 matroid is not almost entropic.
 
-The LP computation and its input data are in [`im_projection.py`](im_projection.py).
-The program needs no input files, saved certificates, SageMath, or Anaconda.
+The verification and its input data are in [`im_projection.py`](im_projection.py).
+The program needs only Python's standard library: no input files, saved
+certificates, numerical solver, or computer algebra system.
 It follows a fixed sequence of six extensions; it does not repeat the search
 that discovered that sequence.
 
@@ -93,11 +94,11 @@ Starting with `h_0 = r_D`, perform the following extensions in order:
 | 16 | {1,6} | {2,5} | {3,7} |
 
 Before each step, the program proves all seven rank premises by exact lower
-and upper bounds derived from the current LP. These premises hold for every
-polymatroid allowed by the preceding constraints, so in particular for each
+and upper rank bounds. These premises hold for every polymatroid allowed by
+the preceding constraints, so in particular for each
 almost-entropic extension supplied by the theorem. Fractional possibilities
-remain in the LP whenever their ranks are not forced. There is no branching
-over integral matroid extensions.
+remain in the intervals whenever their ranks are not forced. There is no
+branching over integral matroid extensions.
 
 The [spatial drawing below](#spatial-drawing-of-the-rank-four-matroid) shows
 all six triples and their common points together with the original planes.
@@ -465,7 +466,7 @@ For a completely concrete naming of the hypothetical extensions above:
 The proof gives `h(5,14,22)=2` and `h(1,22)=1`, contradicting the computed
 `g(1,5,14)=3`. These are hypothetical extensions under the assumption that
 the final matroid is almost entropic; they are mathematical proof steps,
-not additional LP operations performed by `im_projection.py`.
+not additional operations performed by `im_projection.py`.
 
 ### Why the nondegeneracy condition is explicit
 
@@ -543,7 +544,7 @@ coordinates against every original subset of size at most four, and checks
 every displayed line and plane, allowing only the explicitly declared curved
 exceptions. It enumerates every original circuit and checks the description
 used in the caption. The display data are extracted from the verifier's exact
-LP bounds; the drawing program does not replace the LP verification.
+rank bounds; the drawing program does not replace the verification.
 
 With the optional drawing dependency installed, regenerate the single SVG,
 PNG, and HTML viewer from the checked-in display data:
@@ -613,7 +614,7 @@ from the repository directory, run this command on one line:
 python draw_matroid.py data/final_matroid.json --layout figures/final_layout.json --output figures/final_matroid.svg --png figures/final_matroid.png --scale 3
 ```
 
-After rerunning the LP computation, regenerate the basis data directly from
+After rerunning the verification, regenerate the basis data directly from
 its complete rank table with:
 
 ```sh
@@ -622,7 +623,7 @@ python draw_matroid.py im_projection_output/projection.csv --write-json data/fin
 
 The CSV reader requires exact matching integer bounds, checks the basis
 axioms, and checks that the resulting matroid reproduces every input rank.
-The LP verifier computes everything afresh and never reads this saved basis
+The verifier computes everything afresh and never reads this saved basis
 file or the layout.
 
 For other small matroids, supply a JSON file of the following form, with
@@ -653,44 +654,20 @@ its Desargues rank checks belong to the verifier and the example's tests.
 
 ## Install and run
 
-Use Python 3.10 or newer with `pip` and `venv`. The two runtime dependencies are
-NumPy and the HiGHS Python interface, `highspy`. Installation reads their versions
-from [`pyproject.toml`](pyproject.toml) and installs them automatically. HiGHS is
-pinned to 1.16.0, the solver version used for verification.
-
-Download or copy this repository, then open a terminal in its directory.
-
-On Linux or macOS:
-
-```sh
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install .
-larson-le-verify
-```
-
-On Windows, using PowerShell:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install .
-.\.venv\Scripts\larson-le-verify.exe
-```
-
-The virtual environment keeps the dependencies local to this installation.
-The first installation needs access to the Python package index; computation
-after installation is offline.
-
-With the environment's Python, these are equivalent ways to run the program:
+Use Python 3.10 or newer. Download this repository, open a terminal in its
+directory, and run either command:
 
 ```sh
 python -m im_projection
 python im_projection.py
 ```
 
-The second form requires the script in the current directory. You can also copy
-just that file to a computer where the declared NumPy and HiGHS versions are
-already installed. Python's standard library alone is insufficient.
+You can also copy just `im_projection.py` to any computer with Python. No
+package installation or network access is needed. On Windows, `py` can be
+used in place of `python`.
+
+Optionally, `python -m pip install .` installs the `larson-le-verify` command
+and the drawing helpers using the metadata in [`pyproject.toml`](pyproject.toml).
 
 Assertions are part of the verification: run without `python -O` or
 `PYTHONOPTIMIZE`. The command refuses to run if assertions are disabled.
@@ -698,13 +675,12 @@ Assertions are part of the verification: run without `python -O` or
 ## Output
 
 The default output directory is `im_projection_output` in the current directory.
-To choose another directory and also export the six LP models:
+To choose another directory:
 
 ```sh
-larson-le-verify --output results --write-lps
+python im_projection.py --output results
 ```
 
-On Windows, use `.\.venv\Scripts\larson-le-verify.exe` for the command above.
 Reusing an output directory overwrites files with the same names.
 
 * `extensions.json` records the six extension triples, the verified premises,
@@ -713,32 +689,48 @@ Reusing an output directory overwrites files with the same names.
   element 13 and restricting to `(1, 2, 4, 5, 6, 8, 12, 14, 15, 16)`. Bit `i` of
   `local_mask` denotes position `i` in that list, counting from zero. The `points`
   column uses the original element labels.
-* With `--write-lps`, `extension_11.lp` through `extension_16.lp` contain the
-  extension models before compression. Their objectives are zero; the program
-  changes objectives while finding rank bounds.
 
 A successful run ends by reporting that all nine Desargues collinear triples
 have rank two, while the three proposed axis points have rank three. It also
-reports 1,775 LP solves, including feasibility checks. Failure of a verification
-check terminates the program with a nonzero exit status.
+reports the elapsed time. Failure of a verification check terminates the
+program with a nonzero exit status.
 
 ## What is checked
 
-Unknown ranks are real variables throughout. The program imposes polymatroid
+Unknown ranks are real-valued throughout. The program propagates polymatroid
 inequalities, verifies each extension's premises, and only identifies sets or
 fixes ranks when exact lower and upper bounds coincide. Intermediate fractional
 possibilities are retained.
 
-HiGHS finds floating-point solutions. The program reconstructs rational feasible
-points and checks their inequalities exactly. It also reconstructs nonnegative
-dual multipliers and uses exact rational arithmetic and column bounds to obtain
-valid objective bounds. Equality is certified by matching exact bounds, without
-rounding ranks to integers. The final restriction is checked to have integral
+For each closed set `A`, maintain `L(A) <= h(A) <= U(A)`. Monotonicity for
+`A subset B` increases `L(B)` to at least `L(A)` and decreases `U(A)` to at
+most `U(B)`. For closed sets `A,B`, put `C = cl(A union B)` and
+`D = A intersection B`. Submodularity gives `h(A)+h(B) >= h(C)+h(D)`, hence
+these four updates:
+
+```text
+L(A) = max(L(A), L(C) + L(D) - U(B))
+L(B) = max(L(B), L(C) + L(D) - U(A))
+U(C) = min(U(C), U(A) + U(B) - L(D))
+U(D) = min(U(D), U(A) + U(B) - L(C))
+```
+
+Repeat until no bound changes. Every update is valid for every feasible
+real-valued rank function. The input ranks are integers, so all updates use
+integer addition, subtraction, and comparison. No rounding, tolerance, or
+integrality assumption is involved. Propagation can be weaker than linear
+programming in general, but it proves every equality needed for this example.
+Only matching exact endpoints fix a rank or justify closure compression.
+
+At each stage the program also checks that `h(A) = U(A)` satisfies every
+constraint exactly, providing a feasible witness. The deductions continue to
+cover all compatible real-valued rank functions; the witness is used only
+to check feasibility. The final restriction is checked to have integral
 ranks and satisfy the matroid rank axioms.
 
-The LPs impose Shannon inequalities, which are necessary conditions for almost
+These are Shannon inequalities, which are necessary conditions for almost
 entropicity. The extension, minor, and Desargues theorems in the proof outline
-are mathematical inputs, not claims proved by the solver.
+are mathematical inputs, not claims proved by the program.
 
 ## Independent algebraic representation check
 
@@ -776,12 +768,12 @@ This computation was checked with Macaulay2 1.25.11 and Matroids 1.7.0.
 
 ## Tested environment and resources
 
-A fresh installation on Linux x86-64 with Python 3.13.9, NumPy 2.5.4, and
-HiGHS 1.16.0 passed the complete verification and exported all six LP models.
-On an Intel Core i5-1335U, that run took 73.6 seconds and peaked at 480 MiB of
-resident memory. HiGHS uses one solver thread. Runtime varies with hardware.
-These measurements include recomputing everything from the embedded initial
-matroid and extension triples; no saved results were loaded.
+A complete run on Linux x86-64 with Python 3.14.6 took about 0.7 seconds,
+using only the standard library. Its `extensions.json` and `projection.csv`
+were byte-for-byte identical to those from the previous HiGHS 1.16.0 verifier,
+which took 41.6 seconds in the same environment. Runtime varies with hardware.
+Both runs recomputed everything from the embedded initial matroid and extension
+triples; no saved results were loaded by either verifier.
 The figure export was also checked in an isolated environment with CairoSVG
 2.9.1, including its transparent alpha channel.
 
@@ -794,8 +786,8 @@ helpers, and the `larson-le-verify`, `draw-matroid`, and `draw-im-steps` command
 PNG rendering dependencies are optional. No separate `setup.py` or dependency
 list is needed.
 
-The drawing, input-validation, and planar-theorem tests use the
-standard-library test runner:
+The rank-bound, end-to-end, drawing, input-validation, and planar-theorem
+tests use the standard-library test runner:
 
 ```sh
 python -m unittest discover -s tests -v

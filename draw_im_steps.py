@@ -61,11 +61,11 @@ def affine_rank(points):
 
 
 def compact_steps(records, matroid):
-    """Extract only the incidences used in the figure from verified LP output.
+    """Extract only the incidences used in the figure from verified rank bounds.
 
     The compressed closure system identifies each set with its least closed
     superset. Only exactly fixed ranks are accepted here. This reader is a
-    display-data check, not a substitute for rerunning the LP proof.
+    display-data check, not a substitute for rerunning the proof.
     """
     result = []
     for record in records:
@@ -75,7 +75,7 @@ def compact_steps(records, matroid):
         def fixed_closure(points, rank):
             row = next(row for row in closed if set(points) <= set(row["set"]))
             if not Fraction(row["lower"]) == Fraction(row["upper"]) == rank:
-                raise ValueError(f"The saved LP bounds do not force rank {rank} for {points}.")
+                raise ValueError(f"The saved bounds do not force rank {rank} for {points}.")
             return row["set"]
 
         fixed_closure([point], 1)
@@ -88,7 +88,7 @@ def compact_steps(records, matroid):
             planes.append(dict(lines=[i, j], members=members, original_flat=original))
         result.append(dict(new_point=point, lines=drawn_lines, planes=planes,
                            premises=record["premises"]))
-    return {"description": "Selected forced incidences from the six LP extensions; not a complete ambient matroid.",
+    return {"description": "Selected forced incidences from the six IM extensions; not a complete ambient matroid.",
             "steps": result}
 
 

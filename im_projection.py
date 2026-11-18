@@ -1,24 +1,23 @@
-"""Six IM extensions of Larson--Le's dual, computed from scratch by LP.
+"""Six IM extensions of Larson--Le's dual, verified by exact rank bounds.
 
-Install: python -m pip install .
-Run:     python im_projection.py [--output im_projection_output] [--write-lps]
+Run: python im_projection.py [--output im_projection_output]
+Only Python's standard library is needed.
 
-The generic code uses labels 1,...,n and integer bitmasks for subsets. Unknown
-ranks are REAL variables. A closure system identifies h(S) with h(cl(S));
-its closed sets need not be the flats of a matroid. This is just compression
-by known functional dependencies. Monotonicity and submodularity on the
-closed sets imply those inequalities on all subsets: cl(A union B) equals
-cl(cl(A) union cl(B)), while cl(A intersection B) is contained in
-cl(A) intersection cl(B).
+Sets are integer bitmasks, with bit i-1 denoting element i. A closure system
+identifies h(S) with h(cl(S)); its closed sets need not be matroid flats.
+For an intersection-closed family, monotonicity and submodularity on closed
+sets imply both inequalities on all subsets: cl(A union B) equals
+cl(cl(A) union cl(B)), and cl(A intersection B) is contained in
+cl(A) intersection cl(B). Closure compression uses only proved equalities.
 
-HiGHS finds floating-point dual solutions. minimum() turns these into exact
-rational lower bounds using nonnegative row multipliers and column bounds.
-Only EXACTLY matching lower/upper bounds are used to fix ranks or compress.
-No old program, saved ranks, or certificate is read.
-Rational reconstruction failures stop the computation; they cannot silently
-certify a false equality. Run without Python's -O option (checks use assert).
+Bounds propagate by rearranging these inequalities, using exact arithmetic.
+Integer interval endpoints do NOT require unknown ranks to be integers.
+Propagation need not find optimal bounds, but proves every equality needed
+here. The upper-bound vector is checked as an exact feasible witness at
+every stage. No solver, tolerances, saved ranks, or certificates are used.
+Run without Python's -O option: assertions are part of the verification.
 
-The LPs impose Shannon inequalities, not almost entropicity. The mathematical
+The deductions use Shannon inequalities, not almost entropicity. The mathematical
 ingredients outside this program are the AE three-line extension theorem,
 minor closure, and nondegenerate planar Desargues (derived in the README
 from Yashfe, arXiv:2509.06302, Lemma 16 and Theorem 18).
@@ -27,14 +26,15 @@ from Yashfe, arXiv:2509.06302, Lemma 16 and Theorem 18).
 import argparse
 import csv
 import json
-from fractions import Fraction
 from functools import lru_cache
 from itertools import combinations
+from numbers import Rational
 from pathlib import Path
 from time import perf_counter
 
-import highspy
-import numpy as np
+
+if not __debug__:
+    raise RuntimeError("Run without -O: assertions are part of the verification.")
 
 
 def mask(points):
@@ -45,22 +45,12 @@ def labels(s):
     return [i + 1 for i in range(s.bit_length()) if s >> i & 1]
 
 
-def rational(x):
-    # This guesses a useful rational, not an equality with the float.
-    # The subsequent exact inequalities make any such guess safe.
-    return Fraction(float(x)).limit_denominator(1_000_000)
+class RankBounds:
+    """Sound rank intervals from monotonicity and submodularity.
 
-
-def highs_ok(status):
-    if status != highspy.HighsStatus.kOk:
-        raise RuntimeError(f"HiGHS returned {status}")
-
-
-class RankLP:
-    """All polymatroids satisfying a closure system and fixed rational ranks.
-
-    The rank of the full ground set must be fixed. Every LP variable is the
-    rank of one closed set, bounded between zero and that full rank.
+    Inputs are exact rational ranks, including the empty and full sets.
+    For these data the upper bounds also form a feasible rank function;
+    stop if that witness check fails, even if the intervals are consistent.
     """
 
     def __init__(self, n, closed_sets, fixed):
@@ -76,135 +66,66 @@ class RankLP:
             return next(f for f in self.closed if f & s == s)
 
         self.closure = closure
-        self.index = {s: i for i, s in enumerate(self.closed)}
-        self.fixed = {}
+        assert all(isinstance(value, Rational) for value in fixed.values()), \
+            "Ranks must be exact rational numbers."
+        known = {}
         for s, value in fixed.items():
-            f, value = closure(s), Fraction(value)
-            assert f not in self.fixed or self.fixed[f] == value
-            self.fixed[f] = value
-        assert self.fixed[closure(0)] == 0
-        total = self.fixed[self.full]
-        self.lower = [self.fixed.get(s, Fraction(0)) for s in self.closed]
-        self.upper = [self.fixed.get(s, total) for s in self.closed]
-        assert all(0 <= lo <= hi <= total for lo, hi in zip(self.lower, self.upper))
+            f = closure(s)
+            assert f not in known or known[f] == value
+            known[f] = value
+        assert known[closure(0)] == 0
+        lo = self.lower = {s: known.get(s, 0) for s in self.closed}
+        hi = self.upper = {s: known.get(s, known[self.full]) for s in self.closed}
 
-        rows = set()
+        inclusions = sorted({(a, closure(a | 1 << i))
+                             for a in self.closed for i in range(n)})
+        submodular = [(a, b, closure(a | b), a & b)
+                      for a, b in combinations(self.closed, 2) if a & b not in (a, b)]
+        while True:
+            previous = lo.copy(), hi.copy()
+            for a, b in inclusions:
+                lo[b] = max(lo[b], lo[a])
+                hi[a] = min(hi[a], hi[b])
+            # h(a) + h(b) >= h(c) + h(d), with c=cl(a union b), d=a intersect b.
+            for a, b, c, d in submodular:
+                lo[a] = max(lo[a], lo[c] + lo[d] - hi[b])
+                lo[b] = max(lo[b], lo[c] + lo[d] - hi[a])
+                hi[c] = min(hi[c], hi[a] + hi[b] - lo[d])
+                hi[d] = min(hi[d], hi[a] + hi[b] - lo[c])
+            assert all(lo[s] <= hi[s] for s in self.closed), "Inconsistent rank bounds."
+            if previous == (lo, hi):
+                break
 
-        def add(terms):
-            row = {}
-            for s, coefficient in terms:
-                j = self.index[closure(s)]
-                row[j] = row.get(j, 0) + coefficient
-            row = tuple(sorted((j, c) for j, c in row.items() if c))
-            if row:
-                rows.add(row)
-
-        # Each row means sum(coefficient * rank) >= 0.
-        for a in self.closed:
-            for i in range(n):
-                add(((a | 1 << i, 1), (a, -1)))
-        for a, b in combinations(self.closed, 2):
-            if a & b != a and a & b != b:
-                add(((a, 1), (b, 1), (a | b, -1), (a & b, -1)))
-        self.rows = sorted(rows)
-        starts, indices, coefficients = [0], [], []
-        for row in self.rows:
-            for j, c in row:
-                indices.append(j)
-                coefficients.append(c)
-            starts.append(len(indices))
-
-        self.solver = h = highspy.Highs()
-        for option, value in (("output_flag", False), ("threads", 1),
-                              ("solver", "simplex")):
-            highs_ok(h.setOptionValue(option, value))
-        count = len(self.closed)
-        highs_ok(h.addVars(count, np.array(self.lower, dtype=float),
-                          np.array(self.upper, dtype=float)))
-        highs_ok(h.addRows(len(self.rows), np.zeros(len(self.rows)),
-                          np.full(len(self.rows), highspy.kHighsInf), len(indices),
-                          np.array(starts, dtype=np.int32),
-                          np.array(indices, dtype=np.int32),
-                          np.array(coefficients, dtype=float)))
-        self.solves = 0
-        self.run()
-        # An exact feasible point rules out vacuous bounds from an empty LP.
-        witness = list(map(rational, h.getSolution().col_value))
-        assert all(lo <= x <= hi for lo, x, hi in zip(self.lower, witness, self.upper))
-        assert all(sum(c * witness[j] for j, c in row) >= 0 for row in self.rows)
-
-    def run(self):
-        highs_ok(self.solver.run())
-        self.solves += 1
-        if self.solver.getModelStatus() != highspy.HighsModelStatus.kOptimal:
-            raise RuntimeError(self.solver.modelStatusToString(self.solver.getModelStatus()))
-
-    def minimum(self, objective):
-        """An exact lower bound for a linear objective (column, coefficient).
-
-        If A*x >= 0 and y >= 0, then c*x >= (c - A^T*y)*x. Bound each
-        residual term using its column's lower or upper bound. Thus even
-        imperfectly reconstructed dual multipliers give a VALID bound.
-        """
-        costs = np.zeros(len(self.closed))
-        residual = [Fraction(0)] * len(self.closed)
-        for j, c in objective:
-            costs[j], residual[j] = float(c), c
-        highs_ok(self.solver.changeColsCost(len(costs), np.arange(len(costs), dtype=np.int32), costs))
-        self.run()
-        for row, multiplier in zip(self.rows, self.solver.getSolution().row_dual):
-            if multiplier > 0:
-                y = rational(multiplier)
-                for j, c in row:
-                    residual[j] -= y * c
-        return sum(d * (lo if d >= 0 else hi)
-                   for d, lo, hi in zip(residual, self.lower, self.upper))
-
-    @lru_cache(None)
-    def column_bounds(self, objective):
-        lo = self.minimum(objective)
-        hi = -self.minimum(tuple((j, -c) for j, c in objective))
-        assert lo <= hi
-        return lo, hi
-
-    def bounds(self, terms):
-        """Bound sum(c*h(S) for S,c in terms), combining identical closures."""
-        objective, constant = {}, Fraction(0)
-        for s, coefficient in terms:
-            f, c = self.closure(s), Fraction(coefficient)
-            if f in self.fixed:
-                constant += c * self.fixed[f]
-            else:
-                j = self.index[f]
-                objective[j] = objective.get(j, Fraction(0)) + c
-        key = tuple(sorted((j, c) for j, c in objective.items() if c))
-        lo, hi = self.column_bounds(key) if key else (0, 0)
-        return constant + lo, constant + hi
+        # Here the upper endpoints themselves witness feasibility exactly.
+        assert all(hi[a] <= hi[b] for a, b in inclusions)
+        assert all(hi[a] + hi[b] >= hi[c] + hi[d] for a, b, c, d in submodular), \
+            "The upper bounds must form an exact feasible witness."
+        self.fixed = {s: lo[s] for s in self.closed if lo[s] == hi[s]}
 
     def rank_bounds(self, s):
-        return self.bounds(((s, 1),))
+        f = self.closure(s)
+        return self.lower[f], self.upper[f]
 
     def compress(self):
-        """Discover forced ranks by LP, then use h(A)=h(B), A subset B.
+        """Use forced equalities h(A)=h(B), A subset B, to compress closure.
 
         Such an equality gives B subset cl(A). Retaining only closed sets
         respecting these implications propagates them to EVERY superset.
-        Nonconstant rank intervals remain unconstrained real variables.
+        Nonconstant intervals continue to allow real ranks.
         """
-        bounds = {s: self.rank_bounds(s) for s in self.closed}
-        fixed = {s: lo for s, (lo, hi) in bounds.items() if lo == hi}
+        fixed = self.fixed
         implications = [(a, b) for a in fixed for b in fixed
                         if a != b and a & b == a and fixed[a] == fixed[b]]
         closed = [s for s in self.closed
                   if all(s & a != a or s & b == b for a, b in implications)]
-        return RankLP(self.n, closed, fixed)
+        return RankBounds(self.n, closed, fixed)
 
     def im_extend(self, lines):
         """Add z of rank one spanned by each of three rank-two sets.
 
-        Check the seven premises universally over this LP: each line has
+        Check the seven premises for every allowed polymatroid: each line has
         rank 2, each pair of lines has union rank 3, and the total rank is 4.
-        The returned LP includes every polymatroid extension satisfying
+        The returned bounds include every polymatroid extension satisfying
         h(z)=1 and h(L+z)=h(L), for each input line L.
         """
         assert len(lines) == 3
@@ -217,17 +138,7 @@ class RankLP:
         # Old dependencies still hold, and any set containing a line spans z.
         closed = ({f | z for f in self.closed} |
                   {f for f in self.closed if not any(f & line == line for line in lines)})
-        return RankLP(self.n + 1, closed, {**self.fixed, z: 1}), premises
-
-    def write_lp(self, path):
-        for s, j in self.index.items():
-            name = "h_" + ("_".join(map(str, labels(s))) or "empty")
-            highs_ok(self.solver.passColName(j, name))
-        for i in range(len(self.rows)):
-            highs_ok(self.solver.passRowName(i, f"Shannon_{i}"))
-        count = len(self.closed)
-        highs_ok(self.solver.changeColsCost(count, np.arange(count, dtype=np.int32), np.zeros(count)))
-        highs_ok(self.solver.writeModel(str(path)))
+        return RankBounds(self.n + 1, closed, {**self.fixed, z: 1}), premises
 
 
 def from_rank_table(rank):
@@ -237,21 +148,23 @@ def from_rank_table(rank):
     closed = [s for s in range(1 << n)
               if all(rank[s | 1 << i] > rank[s] for i in range(n) if not s >> i & 1)]
     # Passing every original rank also detects inconsistent identifications.
-    return RankLP(n, closed, dict(enumerate(rank)))
+    return RankBounds(n, closed, dict(enumerate(rank)))
 
 
-def projection(lp, contracted, retained):
-    """All coordinate bounds of (h / contracted)|retained, in binary order.
+def projection(ranks, contracted, retained):
+    """Bounds of (h / contracted)|retained, when h(contracted) is fixed.
 
-    Local bit i denotes retained[i]. Optimize the DIFFERENCE, so this also
-    works when h(contracted) is not fixed. Never subtract unrelated extrema.
+    Local bit i denotes retained[i]. Subtract only the proved fixed rank;
+    subtracting separate interval endpoints would not give valid bounds.
     """
     assert len(set(retained)) == len(retained) and not contracted & mask(retained)
+    lower, upper = ranks.rank_bounds(contracted)
+    assert lower == upper, "The contracted set must have a fixed rank."
     result = []
     for local in range(1 << len(retained)):
         s = mask(p for i, p in enumerate(retained) if local >> i & 1)
-        lo, hi = lp.bounds(((s | contracted, 1), (contracted, -1)))
-        result.append((s, lo, hi))
+        lo, hi = ranks.rank_bounds(s | contracted)
+        result.append((s, lo - lower, hi - lower))
     return result
 
 
@@ -308,36 +221,31 @@ def check_desargues(projected):
     print("The restriction is a simple rank-3 matroid; planar AE Desargues is violated.")
 
 
-def main(output, write_lps):
+def main(output):
     start = perf_counter()
     output.mkdir(parents=True, exist_ok=True)
     nonbases = set(map(mask, NONBASES))
     bases = [mask(b) for b in combinations(range(1, 11), 4) if mask(b) not in nonbases]
     assert len(bases) == 190
-    lp = from_rank_table([max((s & b).bit_count() for b in bases) for s in range(1024)])
-    print(f"Initial rank-4 matroid: 10 points, {len(lp.closed)} closed sets.", flush=True)
-    stages, solves = [], lp.solves
+    ranks = from_rank_table([max((s & b).bit_count() for b in bases) for s in range(1024)])
+    print(f"Initial rank-4 matroid: 10 points, {len(ranks.closed)} closed sets.", flush=True)
+    stages = []
     for lines in IM_LINES:
-        new_point = lp.n + 1
-        extended, premises = lp.im_extend(tuple(map(mask, lines)))
+        new_point = ranks.n + 1
+        extended, premises = ranks.im_extend(tuple(map(mask, lines)))
         print(f"\nAdd {new_point}: h({new_point})=1; h(L+{new_point})=h(L) for L in {lines}.", flush=True)
         print("Premises: " + "; ".join(f"h({labels(s)})={v}" for s, v in premises), flush=True)
-        if write_lps:
-            extended.write_lp(output / f"extension_{new_point}.lp")
-        lp = extended.compress()
-        intervals = [(s, *extended.rank_bounds(s)) for s in lp.closed]
+        ranks = extended.compress()
+        intervals = [(s, *ranks.rank_bounds(s)) for s in ranks.closed]
         uncertain = sum(lo != hi for _, lo, hi in intervals)
-        print(f"LP: {len(extended.closed)} variables, {len(extended.rows)} Shannon rows; "
-              f"compressed to {len(lp.closed)} closed sets, {uncertain} undetermined ranks.", flush=True)
+        print(f"Closed sets: {len(extended.closed)} before compression, {len(ranks.closed)} after; "
+              f"{uncertain} undetermined ranks.", flush=True)
         stages.append({"new_point": new_point, "lines": lines,
                        "premises": [{"set": labels(s), "rank": v} for s, v in premises],
                        "closed_set_bounds": [{"set": labels(s), "lower": str(lo), "upper": str(hi)}
                                              for s, lo, hi in intervals]})
-        solves += extended.solves + lp.solves
     (output / "extensions.json").write_text(json.dumps(stages, indent=2) + "\n")
-    before = lp.solves
-    projected = projection(lp, mask(CONTRACT), RETAIN)
-    solves += lp.solves - before
+    projected = projection(ranks, mask(CONTRACT), RETAIN)
     with (output / "projection.csv").open("w", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["local_mask", "points", "lower", "upper"])
@@ -346,18 +254,15 @@ def main(output, write_lps):
     print(f"\nContract {CONTRACT}; restrict to {RETAIN}.")
     check_desargues(projected)
     print(f"Wrote six extensions and all 1024 coordinate bounds to {output}.")
-    print(f"{solves} LP solves (including feasibility); {perf_counter() - start:.2f} seconds.")
+    print(f"Exact arithmetic only; {perf_counter() - start:.2f} seconds.")
 
 
 def cli():
     """Entry point for the installed command and direct script execution."""
-    if not __debug__:
-        raise RuntimeError("Run without -O: assertions are part of the verification.")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("im_projection_output"))
-    parser.add_argument("--write-lps", action="store_true", help="also export the six LP models")
     args = parser.parse_args()
-    main(args.output, args.write_lps)
+    main(args.output)
 
 
 if __name__ == "__main__":
