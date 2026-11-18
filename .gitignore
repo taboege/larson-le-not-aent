@@ -5,6 +5,7 @@ __pycache__/
 build/
 dist/
 im_projection_output/
+im_projection2_output/
 algebraic_output/
 /dual_bases.csv
 /dual_nonbases.csv

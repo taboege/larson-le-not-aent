@@ -672,6 +672,27 @@ and the drawing helpers using the metadata in [`pyproject.toml`](pyproject.toml)
 Assertions are part of the verification: run without `python -O` or
 `PYTHONOPTIMIZE`. The command refuses to run if assertions are disabled.
 
+### Alternative rank oracle interface
+
+[`im_projection2.py`](im_projection2.py) is an experimental alternative that
+shares the bounds engine and input data with `im_projection.py`. It builds
+a partial rank oracle from a seed rank function and the fixed IM sequence.
+Bounds propagate during construction; each subsequent query returns a rank
+only if its lower and upper bounds agree. Otherwise it raises
+`UndeterminedRankError`. Fractional ranks remain allowed.
+
+The oracle's `minor(contracted, retained)` method returns another oracle
+using `r(S union contracted) - r(contracted)`. The complete matroid and
+Desargues checks then use only rank queries, independently of the closure
+and compression implementation. The ambient oracle can still have
+undetermined ranks even though every rank of the selected minor is forced.
+
+Run `python im_projection2.py`, or the installed `larson-le-verify2` command.
+This version writes only `projection.csv`, to `im_projection2_output` by
+default, with `--output` available to choose another directory. Its CSV is
+identical to the first version's. The first version continues to produce
+the full extension-bound records as well.
+
 ## Output
 
 The default output directory is `im_projection_output` in the current directory.
