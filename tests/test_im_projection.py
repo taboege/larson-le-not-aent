@@ -12,63 +12,146 @@ import unittest
 
 from draw_im_steps import compact_steps
 from draw_matroid import load_matroid
-from im_projection import RankBounds, from_rank_table, main, mask, projection
+from im_projection import (ClosureSystem, Inequality, RankBounds, from_rank_table,
+                           main, projection, subsets)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def bounds(points, fixed):
+    return RankBounds(ClosureSystem(subsets(points)),
+                      {frozenset(s): value for s, value in fixed.items()})
+
+
+class ClosureSystemTests(unittest.TestCase):
+    def test_implications_apply_to_every_superset(self):
+        original = ClosureSystem(subsets((2, 5, 9)))
+        refined = original.imply(iter([(frozenset({2}), frozenset({2, 5}))]))
+        self.assertEqual(refined({2}), {2, 5})
+        self.assertEqual(refined({2, 9}), {2, 5, 9})
+        self.assertEqual(refined({9}), {9})
+        self.assertEqual(original({2, 9}), {2, 9})
+
+    def test_adjoined_point_is_spanned_by_the_declared_sets(self):
+        original = ClosureSystem(subsets((2, 5, 9)))
+        extended = original.adjoin(11, iter(((2, 5), (5, 9))))
+        self.assertEqual(extended({2, 5}), {2, 5, 11})
+        self.assertEqual(extended({5, 9}), {5, 9, 11})
+        self.assertEqual(extended({2, 9}), {2, 9})
+        self.assertEqual(extended({11}), {11})
+        self.assertEqual(original.ground, {2, 5, 9})
+        with self.assertRaises(AssertionError):
+            original.adjoin(5, ())
+
+    def test_non_intersection_closed_family_is_rejected(self):
+        with self.assertRaises(AssertionError):
+            ClosureSystem(((), (1, 2), (2, 3), (1, 2, 3)))
+
+
+class InequalityTests(unittest.TestCase):
+    def test_submodularity_tightens_each_of_its_four_variables(self):
+        inequality = Inequality(('a', 'b'), ('c', 'd'))
+        # a+b >= c+d, with all but one of the ranks fixed.
+        expected = {'a': (3, 10), 'b': (2, 10), 'c': (0, 6), 'd': (0, 2)}
+        for variable, interval in expected.items():
+            with self.subTest(variable=variable):
+                lower = dict(a=4, b=3, c=5, d=1)
+                upper = lower.copy()
+                lower[variable], upper[variable] = 0, 10
+                inequality.tighten(lower, upper)
+                self.assertEqual((lower[variable], upper[variable]), interval)
+        self.assertTrue(inequality.holds(dict(a=4, b=3, c=5, d=1)))
+        self.assertFalse(inequality.holds(dict(a=2, b=3, c=5, d=1)))
+
+    def test_monotonicity_uses_the_same_rule_with_exact_fractions(self):
+        inequality = Inequality(('larger',), ('smaller',))
+        lower = dict(smaller=Fraction(1, 3), larger=0)
+        upper = dict(smaller=1, larger=Fraction(2, 3))
+        inequality.tighten(lower, upper)
+        self.assertEqual(lower['larger'], Fraction(1, 3))
+        self.assertEqual(upper['smaller'], Fraction(2, 3))
+
+    def test_overlapping_rank_variables_are_rejected(self):
+        with self.assertRaises(AssertionError):
+            Inequality(('a', 'b'), ('b', 'c'))
+
+
 class RankBoundsTests(unittest.TestCase):
     def test_exact_fractional_input(self):
         # A modular polymatroid with singleton ranks 1/3 and 2/3.
-        table = [0, Fraction(1, 3), Fraction(2, 3), 1]
+        table = dict(zip(subsets((1, 2)), [0, Fraction(1, 3), Fraction(2, 3), 1]))
         ranks = from_rank_table(table)
-        self.assertEqual([ranks.rank_bounds(s) for s in range(4)],
-                         [(r, r) for r in table])
+        self.assertEqual([ranks.rank_bounds(s) for s in table],
+                         [(r, r) for r in table.values()])
 
     def test_floating_point_input_is_rejected(self):
         with self.assertRaisesRegex(AssertionError, "exact rational"):
-            RankBounds(1, range(2), {0: 0, 1: 1.0})
+            bounds((1,), {(): 0, (1,): 1.0})
 
     def test_submodularity_forces_ranks_and_parallel_closure(self):
         # Points 1 and 2 are parallel, and point 3 is independent of them.
-        ranks = RankBounds(3, range(8), {0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 7: 2})
+        ranks = bounds((1, 2, 3), {(): 0, (1,): 1, (2,): 1, (1, 2): 1, (3,): 1, (1, 2, 3): 2})
         expected = [0, 1, 1, 1, 1, 2, 2, 2]
-        self.assertEqual([ranks.rank_bounds(s) for s in range(8)],
+        self.assertEqual([ranks.rank_bounds(s) for s in subsets((1, 2, 3))],
                          [(r, r) for r in expected])
         compressed = ranks.compress()
-        self.assertEqual(compressed.closure(mask([1])), mask([1, 2]))
-        self.assertEqual(compressed.closure(mask([1, 3])), mask([1, 2, 3]))
-        self.assertEqual([compressed.rank_bounds(s) for s in range(8)],
+        self.assertEqual(compressed.closure({1}), {1, 2})
+        self.assertEqual(compressed.closure({1, 3}), {1, 2, 3})
+        self.assertEqual([compressed.rank_bounds(s) for s in subsets((1, 2, 3))],
                          [(r, r) for r in expected])
 
     def test_integer_endpoints_keep_fractional_polymatroids(self):
-        ranks = RankBounds(3, range(8), {0: 0, 1: 1, 2: 1, 4: 1, 7: 2})
+        ranks = bounds((1, 2, 3), {(): 0, (1,): 1, (2,): 1, (3,): 1, (1, 2, 3): 2})
         # The average of U(1,3) and U(3,3) has rank 3/2 on each pair.
-        witness = [Fraction(min(s.bit_count(), 1) + s.bit_count(), 2)
-                   for s in range(8)]
-        for s, value in enumerate(witness):
+        witness = {s: Fraction(min(len(s), 1) + len(s), 2) for s in subsets((1, 2, 3))}
+        for s, value in witness.items():
             lo, hi = ranks.rank_bounds(s)
             self.assertLessEqual(lo, value)
             self.assertLessEqual(value, hi)
-        self.assertEqual(ranks.rank_bounds(mask([1, 2])), (1, 2))
+        self.assertEqual(ranks.rank_bounds({1, 2}), (1, 2))
 
     def test_inconsistent_submodular_data_are_rejected(self):
         with self.assertRaisesRegex(AssertionError, "Inconsistent rank bounds"):
-            from_rank_table([0, 1, 1, 3])
+            from_rank_table(dict(zip(subsets((1, 2)), [0, 1, 1, 3])))
+
+    def test_rank_table_must_contain_every_subset(self):
+        with self.assertRaises(AssertionError):
+            from_rank_table({frozenset(): 0, frozenset({2, 9}): 2})
+
+    def test_loops_are_in_the_closure_of_the_empty_set(self):
+        table = dict(zip(subsets((2, 9)), [0, 0, 1, 1]))
+        ranks = from_rank_table(table)
+        self.assertEqual(ranks.closure(()), {2})
+        self.assertEqual([ranks.rank_bounds(s) for s in table],
+                         [(r, r) for r in table.values()])
 
     def test_uncertain_contracted_rank_is_rejected(self):
-        ranks = RankBounds(3, range(8), {0: 0, 1: 1, 2: 1, 4: 1, 7: 2})
+        ranks = bounds((1, 2, 3), {(): 0, (1,): 1, (2,): 1, (3,): 1, (1, 2, 3): 2})
         with self.assertRaisesRegex(AssertionError, "contracted set must have a fixed rank"):
-            projection(ranks, mask([1, 2]), [3])
+            projection(ranks, {1, 2}, [3])
+
+    def test_projection_keeps_sparse_labels_and_retained_order(self):
+        weights = {2: Fraction(1, 3), 7: Fraction(2, 3), 11: Fraction(4, 3)}
+        ranks = from_rank_table({s: sum(weights[p] for p in s) for s in subsets(weights)})
+        actual = projection(ranks, {7}, (11, 2))
+        expected = [0, Fraction(4, 3), Fraction(1, 3), Fraction(5, 3)]
+        self.assertEqual(actual, [(s, r, r) for s, r in zip(subsets((11, 2)), expected)])
+
+    def test_im_extension_requires_rank_four_for_the_three_line_union(self):
+        # U(3,6): all line ranks and pairwise union ranks have the required
+        # values, but the union of all three lines still has rank three.
+        ranks = from_rank_table({s: min(len(s), 3) for s in subsets(range(1, 7))})
+        with self.assertRaises(AssertionError):
+            ranks.im_extend(7, ((1, 2), (3, 4), (5, 6)))
 
     def test_upper_endpoints_must_supply_a_feasible_witness(self):
         # These constraints are feasible (take 1||2, 3||4, and independent 5),
         # but the coordinatewise upper bounds are not jointly feasible.
-        fixed = {0: 0, 31: 3, mask([1, 2, 3]): 2, mask([1, 2, 4]): 2}
-        fixed.update({1 << i: 1 for i in range(5)})
+        fixed = {(): 0, (1, 2, 3, 4, 5): 3, (1, 2, 3): 2, (1, 2, 4): 2}
+        fixed.update({(p,): 1 for p in range(1, 6)})
         with self.assertRaisesRegex(AssertionError, "exact feasible witness"):
-            RankBounds(5, range(32), fixed)
+            bounds(range(1, 6), fixed)
 
 
 class CompleteVerificationTests(unittest.TestCase):

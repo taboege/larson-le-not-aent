@@ -3,8 +3,8 @@
 Run: python im_projection.py [--output im_projection_output]
 Only Python's standard library is needed.
 
-Sets are integer bitmasks, with bit i-1 denoting element i. A closure system
-identifies h(S) with h(cl(S)); its closed sets need not be matroid flats.
+Subsets are frozensets of element labels. A closure system identifies
+h(S) with h(cl(S)); its closed sets need not be matroid flats.
 For an intersection-closed family, monotonicity and submodularity on closed
 sets imply both inequalities on all subsets: cl(A union B) equals
 cl(cl(A) union cl(B)), and cl(A intersection B) is contained in
@@ -37,12 +37,62 @@ if not __debug__:
     raise RuntimeError("Run without -O: assertions are part of the verification.")
 
 
-def mask(points):
-    return sum(1 << (p - 1) for p in set(points))
+def subsets(points):
+    """All subsets, in binary order of the given labels for CSV local_mask."""
+    result = [frozenset()]
+    for point in points:
+        result += [s | {point} for s in result]
+    return result
 
 
-def labels(s):
-    return [i + 1 for i in range(s.bit_length()) if s >> i & 1]
+class ClosureSystem:
+    """An intersection-closed family, ordered so the least superset comes first."""
+
+    def __init__(self, closed_sets):
+        family = frozenset(map(frozenset, closed_sets))
+        self.ground = frozenset().union(*family)
+        assert self.ground in family
+        assert all(a & b in family for a, b in combinations(family, 2))
+        self.closed = tuple(sorted(family, key=lambda s: (len(s), sorted(s))))
+        self._closure = lru_cache(None)(lambda s: next(f for f in self.closed if s <= f))
+
+    def __call__(self, points):
+        s = frozenset(points)
+        assert s <= self.ground
+        return self._closure(s)
+
+    def imply(self, implications):
+        """Keep precisely the closed sets respecting every implication A -> B."""
+        implications = tuple(implications)
+        return ClosureSystem(s for s in self.closed
+                             if all(not a <= s or b <= s for a, b in implications))
+
+    def adjoin(self, point, spans):
+        """Adjoin a point spanned by each specified old set."""
+        spans = tuple(map(frozenset, spans))
+        assert point not in self.ground and all(s <= self.ground for s in spans)
+        return ClosureSystem([f | {point} for f in self.closed] +
+                             [f for f in self.closed if not any(s <= f for s in spans)])
+
+
+class Inequality:
+    """sum h(positive) >= sum h(negative), with distinct rank variables."""
+
+    def __init__(self, positive, negative):
+        self.positive, self.negative = tuple(positive), tuple(negative)
+        terms = self.positive + self.negative
+        assert len(set(terms)) == len(terms)
+
+    def tighten(self, lower, upper):
+        left_max = sum(upper[s] for s in self.positive)
+        right_min = sum(lower[s] for s in self.negative)
+        for s in self.positive:
+            lower[s] = max(lower[s], right_min - left_max + upper[s])
+        for s in self.negative:
+            upper[s] = min(upper[s], left_max - right_min + lower[s])
+
+    def holds(self, rank):
+        return sum(rank[s] for s in self.positive) >= sum(rank[s] for s in self.negative)
 
 
 class RankBounds:
@@ -53,19 +103,9 @@ class RankBounds:
     stop if that witness check fails, even if the intervals are consistent.
     """
 
-    def __init__(self, n, closed_sets, fixed):
-        self.n, self.full = n, (1 << n) - 1
-        self.closed = sorted(set(closed_sets), key=lambda s: (s.bit_count(), s))
-        closed = set(self.closed)
-        assert self.full in closed and all(0 <= s <= self.full for s in closed)
-        assert all(a & b in closed for a, b in combinations(closed, 2))
-
-        @lru_cache(None)
-        def closure(s):
-            assert 0 <= s <= self.full
-            return next(f for f in self.closed if f & s == s)
-
+    def __init__(self, closure, fixed):
         self.closure = closure
+        closed, ground = closure.closed, closure.ground
         assert all(isinstance(value, Rational) for value in fixed.values()), \
             "Ranks must be exact rational numbers."
         known = {}
@@ -73,34 +113,26 @@ class RankBounds:
             f = closure(s)
             assert f not in known or known[f] == value
             known[f] = value
-        assert known[closure(0)] == 0
-        lo = self.lower = {s: known.get(s, 0) for s in self.closed}
-        hi = self.upper = {s: known.get(s, known[self.full]) for s in self.closed}
+        assert known[closure(())] == 0
+        lo = self.lower = {s: known.get(s, 0) for s in closed}
+        hi = self.upper = {s: known.get(s, known[ground]) for s in closed}
 
-        inclusions = sorted({(a, closure(a | 1 << i))
-                             for a in self.closed for i in range(n)})
-        submodular = [(a, b, closure(a | b), a & b)
-                      for a, b in combinations(self.closed, 2) if a & b not in (a, b)]
+        inclusions = dict.fromkeys((a, closure(a | {p})) for a in closed for p in sorted(ground - a))
+        inequalities = [Inequality((b,), (a,)) for a, b in inclusions]
+        inequalities += [Inequality((a, b), (closure(a | b), a & b))
+                         for a, b in combinations(closed, 2) if not (a <= b or b <= a)]
         while True:
             previous = lo.copy(), hi.copy()
-            for a, b in inclusions:
-                lo[b] = max(lo[b], lo[a])
-                hi[a] = min(hi[a], hi[b])
-            # h(a) + h(b) >= h(c) + h(d), with c=cl(a union b), d=a intersect b.
-            for a, b, c, d in submodular:
-                lo[a] = max(lo[a], lo[c] + lo[d] - hi[b])
-                lo[b] = max(lo[b], lo[c] + lo[d] - hi[a])
-                hi[c] = min(hi[c], hi[a] + hi[b] - lo[d])
-                hi[d] = min(hi[d], hi[a] + hi[b] - lo[c])
-            assert all(lo[s] <= hi[s] for s in self.closed), "Inconsistent rank bounds."
+            for inequality in inequalities:
+                inequality.tighten(lo, hi)
+            assert all(lo[s] <= hi[s] for s in closed), "Inconsistent rank bounds."
             if previous == (lo, hi):
                 break
 
         # Here the upper endpoints themselves witness feasibility exactly.
-        assert all(hi[a] <= hi[b] for a, b in inclusions)
-        assert all(hi[a] + hi[b] >= hi[c] + hi[d] for a, b, c, d in submodular), \
+        assert all(inequality.holds(hi) for inequality in inequalities), \
             "The upper bounds must form an exact feasible witness."
-        self.fixed = {s: lo[s] for s in self.closed if lo[s] == hi[s]}
+        self.fixed = {s: lo[s] for s in closed if lo[s] == hi[s]}
 
     def rank_bounds(self, s):
         f = self.closure(s)
@@ -115,12 +147,10 @@ class RankBounds:
         """
         fixed = self.fixed
         implications = [(a, b) for a in fixed for b in fixed
-                        if a != b and a & b == a and fixed[a] == fixed[b]]
-        closed = [s for s in self.closed
-                  if all(s & a != a or s & b == b for a, b in implications)]
-        return RankBounds(self.n, closed, fixed)
+                        if a < b and fixed[a] == fixed[b]]
+        return RankBounds(self.closure.imply(implications), fixed)
 
-    def im_extend(self, lines):
+    def im_extend(self, point, lines):
         """Add z of rank one spanned by each of three rank-two sets.
 
         Check the seven premises for every allowed polymatroid: each line has
@@ -128,41 +158,37 @@ class RankBounds:
         The returned bounds include every polymatroid extension satisfying
         h(z)=1 and h(L+z)=h(L), for each input line L.
         """
+        lines = tuple(map(frozenset, lines))
         assert len(lines) == 3
-        a, b, c = lines
-        premises = [(a, 2), (b, 2), (c, 2), (a | b, 3), (a | c, 3),
-                    (b | c, 3), (a | b | c, 4)]
+        premises = [(frozenset().union(*group), size + 1)
+                    for size in (1, 2, 3) for group in combinations(lines, size)]
         for s, value in premises:
-            assert self.rank_bounds(s) == (value, value), (labels(s), self.rank_bounds(s))
-        z = 1 << self.n
-        # Old dependencies still hold, and any set containing a line spans z.
-        closed = ({f | z for f in self.closed} |
-                  {f for f in self.closed if not any(f & line == line for line in lines)})
-        return RankBounds(self.n + 1, closed, {**self.fixed, z: 1}), premises
+            assert self.rank_bounds(s) == (value, value), (sorted(s), self.rank_bounds(s))
+        closure = self.closure.adjoin(point, lines)
+        return RankBounds(closure, {**self.fixed, frozenset({point}): 1}), premises
 
 
 def from_rank_table(rank):
-    """Start with any rational polymatroid rank table, indexed by subset mask."""
-    n = (len(rank) - 1).bit_length()
-    assert len(rank) == 1 << n
-    closed = [s for s in range(1 << n)
-              if all(rank[s | 1 << i] > rank[s] for i in range(n) if not s >> i & 1)]
+    """Start with any rational polymatroid rank table, keyed by frozensets."""
+    ground = frozenset().union(*rank)
+    assert set(rank) == set(subsets(ground))
+    closed = ClosureSystem(s for s in rank if all(rank[s | {p}] > rank[s] for p in ground - s))
     # Passing every original rank also detects inconsistent identifications.
-    return RankBounds(n, closed, dict(enumerate(rank)))
+    return RankBounds(closed, rank)
 
 
 def projection(ranks, contracted, retained):
     """Bounds of (h / contracted)|retained, when h(contracted) is fixed.
 
-    Local bit i denotes retained[i]. Subtract only the proved fixed rank;
-    subtracting separate interval endpoints would not give valid bounds.
+    Subtract only the proved fixed rank; subtracting separate interval
+    endpoints would not give valid bounds.
     """
-    assert len(set(retained)) == len(retained) and not contracted & mask(retained)
+    contracted = frozenset(contracted)
+    assert len(set(retained)) == len(retained) and contracted.isdisjoint(retained)
     lower, upper = ranks.rank_bounds(contracted)
     assert lower == upper, "The contracted set must have a fixed rank."
     result = []
-    for local in range(1 << len(retained)):
-        s = mask(p for i, p in enumerate(retained) if local >> i & 1)
+    for s in subsets(retained):
         lo, hi = ranks.rank_bounds(s | contracted)
         result.append((s, lo - lower, hi - lower))
     return result
@@ -195,14 +221,14 @@ def check_desargues(projected):
     assert all(lo == hi and lo.denominator == 1 for _, lo, hi in projected)
     rank = {s: int(lo) for s, lo, _ in projected}
     points = list(RETAIN)
-    assert rank[0] == 0 and rank[mask(points)] == 3
+    assert rank[frozenset()] == 0 and rank[frozenset(points)] == 3
     for s, r in rank.items():
-        assert 0 <= r <= s.bit_count()
+        assert 0 <= r <= len(s)
         for p in points:
-            assert rank[s | mask([p])] >= r
+            assert rank[s | {p}] >= r
         for p, q in combinations(points, 2):
-            assert rank[s | mask([p])] + rank[s | mask([q])] >= r + rank[s | mask([p, q])]
-    r = lambda *ps: rank[mask(ps)]
+            assert rank[s | {p}] + rank[s | {q}] >= r + rank[s | {p, q}]
+    r = lambda *ps: rank[frozenset(ps)]
     assert all(r(p) == 1 for p in points)
     assert all(r(p, q) == 2 for p, q in combinations(points, 2))
     o, a, b, x = 4, (2, 15, 12), (6, 16, 8), (5, 14, 1)
@@ -224,33 +250,32 @@ def check_desargues(projected):
 def main(output):
     start = perf_counter()
     output.mkdir(parents=True, exist_ok=True)
-    nonbases = set(map(mask, NONBASES))
-    bases = [mask(b) for b in combinations(range(1, 11), 4) if mask(b) not in nonbases]
+    nonbases = set(map(frozenset, NONBASES))
+    bases = [frozenset(b) for b in combinations(range(1, 11), 4) if frozenset(b) not in nonbases]
     assert len(bases) == 190
-    ranks = from_rank_table([max((s & b).bit_count() for b in bases) for s in range(1024)])
-    print(f"Initial rank-4 matroid: 10 points, {len(ranks.closed)} closed sets.", flush=True)
+    ranks = from_rank_table({s: max(len(s & b) for b in bases) for s in subsets(range(1, 11))})
+    print(f"Initial rank-4 matroid: 10 points, {len(ranks.closure.closed)} closed sets.", flush=True)
     stages = []
-    for lines in IM_LINES:
-        new_point = ranks.n + 1
-        extended, premises = ranks.im_extend(tuple(map(mask, lines)))
+    for new_point, lines in enumerate(IM_LINES, 11):
+        extended, premises = ranks.im_extend(new_point, lines)
         print(f"\nAdd {new_point}: h({new_point})=1; h(L+{new_point})=h(L) for L in {lines}.", flush=True)
-        print("Premises: " + "; ".join(f"h({labels(s)})={v}" for s, v in premises), flush=True)
+        print("Premises: " + "; ".join(f"h({sorted(s)})={v}" for s, v in premises), flush=True)
         ranks = extended.compress()
-        intervals = [(s, *ranks.rank_bounds(s)) for s in ranks.closed]
+        intervals = [(s, *ranks.rank_bounds(s)) for s in ranks.closure.closed]
         uncertain = sum(lo != hi for _, lo, hi in intervals)
-        print(f"Closed sets: {len(extended.closed)} before compression, {len(ranks.closed)} after; "
+        print(f"Closed sets: {len(extended.closure.closed)} before compression, {len(ranks.closure.closed)} after; "
               f"{uncertain} undetermined ranks.", flush=True)
         stages.append({"new_point": new_point, "lines": lines,
-                       "premises": [{"set": labels(s), "rank": v} for s, v in premises],
-                       "closed_set_bounds": [{"set": labels(s), "lower": str(lo), "upper": str(hi)}
+                       "premises": [{"set": sorted(s), "rank": v} for s, v in premises],
+                       "closed_set_bounds": [{"set": sorted(s), "lower": str(lo), "upper": str(hi)}
                                              for s, lo, hi in intervals]})
     (output / "extensions.json").write_text(json.dumps(stages, indent=2) + "\n")
-    projected = projection(ranks, mask(CONTRACT), RETAIN)
+    projected = projection(ranks, CONTRACT, RETAIN)
     with (output / "projection.csv").open("w", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["local_mask", "points", "lower", "upper"])
         for local, (s, lo, hi) in enumerate(projected):
-            writer.writerow([local, " ".join(map(str, labels(s))), str(lo), str(hi)])
+            writer.writerow([local, " ".join(map(str, sorted(s))), str(lo), str(hi)])
     print(f"\nContract {CONTRACT}; restrict to {RETAIN}.")
     check_desargues(projected)
     print(f"Wrote six extensions and all 1024 coordinate bounds to {output}.")

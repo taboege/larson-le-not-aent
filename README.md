@@ -702,6 +702,13 @@ inequalities, verifies each extension's premises, and only identifies sets or
 fixes ranks when exact lower and upper bounds coincide. Intermediate fractional
 possibilities are retained.
 
+The implementation separates three small structures: `ClosureSystem` stores
+the closed sets as frozensets and applies closure implications; `Inequality`
+represents a sum of ranks bounded below by another sum; and `RankBounds`
+propagates intervals on the closed sets. Monotonicity and submodularity use
+the same tightening algorithm. The seven IM premises are generated from
+the nonempty subfamilies of the three lines.
+
 For each closed set `A`, maintain `L(A) <= h(A) <= U(A)`. Monotonicity for
 `A subset B` increases `L(B)` to at least `L(A)` and decreases `U(A)` to at
 most `U(B)`. For closed sets `A,B`, put `C = cl(A union B)` and

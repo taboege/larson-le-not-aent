@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import unittest
 
-from im_projection import RETAIN, check_desargues, mask
+from im_projection import RETAIN, check_desargues, subsets
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,10 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def projection(rank):
     result = []
-    for bits in range(1 << len(RETAIN)):
-        subset = frozenset(p for i, p in enumerate(RETAIN) if bits >> i & 1)
+    for subset in subsets(RETAIN):
         value = Fraction(rank(subset))
-        result.append((mask(subset), value, value))
+        result.append((subset, value, value))
     return result
 
 
