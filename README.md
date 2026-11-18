@@ -672,14 +672,13 @@ and the drawing helpers using the metadata in [`pyproject.toml`](pyproject.toml)
 Assertions are part of the verification: run without `python -O` or
 `PYTHONOPTIMIZE`. The command refuses to run if assertions are disabled.
 
-### Alternative rank oracle interface
+### Rank oracle
 
-[`im_projection2.py`](im_projection2.py) is an experimental alternative that
-shares the bounds engine and input data with `im_projection.py`. It builds
-a partial rank oracle from a seed rank function and the fixed IM sequence.
-Bounds propagate during construction; each subsequent query returns a rank
-only if its lower and upper bounds agree. Otherwise it raises
-`UndeterminedRankError`. Fractional ranks remain allowed.
+`im_projection.py` builds a partial rank oracle from a seed rank function and
+the fixed IM sequence. Bounds propagate and closure compression runs after
+every extension. Each subsequent query returns a rank only if its lower and
+upper bounds agree. Otherwise it raises `UndeterminedRankError`. Fractional
+ranks remain allowed.
 
 The oracle's `minor(contracted, retained)` method returns another oracle
 using `r(S union contracted) - r(contracted)`. The complete matroid and
@@ -687,11 +686,9 @@ Desargues checks then use only rank queries, independently of the closure
 and compression implementation. The ambient oracle can still have
 undetermined ranks even though every rank of the selected minor is forced.
 
-Run `python im_projection2.py`, or the installed `larson-le-verify2` command.
-This version writes only `projection.csv`, to `im_projection2_output` by
-default, with `--output` available to choose another directory. Its CSV is
-identical to the first version's. The first version continues to produce
-the full extension-bound records as well.
+The verifier is self-contained in this single file and uses only the standard
+library. An optional reporting callback records each extension's checked
+bounds for `extensions.json`; the minor and final checks use only the oracle.
 
 ## Output
 
@@ -723,12 +720,42 @@ inequalities, verifies each extension's premises, and only identifies sets or
 fixes ranks when exact lower and upper bounds coincide. Intermediate fractional
 possibilities are retained.
 
-The implementation separates three small structures: `ClosureSystem` stores
-the closed sets as frozensets and applies closure implications; `Inequality`
-represents a sum of ranks bounded below by another sum; and `RankBounds`
-propagates intervals on the closed sets. Monotonicity and submodularity use
-the same tightening algorithm. The seven IM premises are generated from
-the nonempty subfamilies of the three lines.
+The implementation separates four small structures. `ClosureSystem` stores
+the closed sets as frozensets and applies closure implications. `Inequality`
+represents a sum of ranks bounded below by another sum. `RankBounds` propagates
+intervals on the closed sets, and `RankOracle` exposes forced ranks and
+constructs minors. Monotonicity and submodularity use the same tightening
+algorithm. The seven IM premises are generated from the nonempty subfamilies
+of the three lines.
+
+The closure operator is **total**, even when rank information is partial.
+Every subset `S` has a least closed superset `cl(S)`, found among the current
+representatives. The closed family encodes proved dependencies, rather than
+all the flats of a particular compatible polymatroid. For every compatible
+rank function, `h(S) = h(cl(S))`; its full rank-defined closure may be larger.
+Both lower and upper bounds are stored for every representative. The `fixed`
+map contains only those whose endpoints agree.
+
+Compression uses the following consequence of submodularity. If `A subset B`
+have the same proved rank, then for every `S` containing `A`,
+
+```text
+h(S union B) <= h(S) + h(B) - h(S intersection B) <= h(S).
+```
+
+Monotonicity supplies the reverse inequality, so adjoining `B` does not
+change `h(S)`. This is the implication `A -> B`. To incorporate it, keep
+only closed sets `F` satisfying `A subset F implies B subset F`. This
+preserves an intersection-closed family and applies the dependency to every
+superset of `A`. Bounds propagate again on the smaller family. Each IM
+extension first incorporates its three line-to-new-point dependencies;
+the subsequent deductions can justify further compression.
+
+In this example the final family has 223 representatives for all 65,536
+subsets of the 16-element ground set. Of these representatives, 215 have
+proved ranks and eight still have bounds `[3,4]`. The oracle raises an error
+on those unresolved queries. All 1,024 queries needed for the selected minor
+have matching bounds.
 
 For each closed set `A`, maintain `L(A) <= h(A) <= U(A)`. Monotonicity for
 `A subset B` increases `L(B)` to at least `L(A)` and decreases `U(A)` to at
@@ -796,12 +823,12 @@ This computation was checked with Macaulay2 1.25.11 and Matroids 1.7.0.
 
 ## Tested environment and resources
 
-A complete run on Linux x86-64 with Python 3.14.6 took about 0.7 seconds,
-using only the standard library. Its `extensions.json` and `projection.csv`
-were byte-for-byte identical to those from the previous HiGHS 1.16.0 verifier,
-which took 41.6 seconds in the same environment. Runtime varies with hardware.
-Both runs recomputed everything from the embedded initial matroid and extension
-triples; no saved results were loaded by either verifier.
+Three complete command-line runs on Linux with Python 3.14.6 took 1.64–1.68
+seconds (median 1.65), with 59.5–59.8 MiB peak resident memory including Python.
+These runs used only the standard library and wrote both output files. The
+verifier recomputes everything from the embedded initial matroid and extension
+triples, without loading saved results. Runtime and memory use vary with the
+environment.
 The figure export was also checked in an isolated environment with CairoSVG
 2.9.1, including its transparent alpha channel.
 

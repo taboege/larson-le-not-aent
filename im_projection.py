@@ -5,6 +5,8 @@ Only Python's standard library is needed.
 
 Subsets are frozensets of element labels. A closure system identifies
 h(S) with h(cl(S)); its closed sets need not be matroid flats.
+This closure is defined on every subset using proved dependencies; ranks
+of its closed sets are represented by intervals, not necessarily exact values.
 For an intersection-closed family, monotonicity and submodularity on closed
 sets imply both inequalities on all subsets: cl(A union B) equals
 cl(cl(A) union cl(B)), and cl(A intersection B) is contained in
@@ -15,6 +17,8 @@ Integer interval endpoints do NOT require unknown ranks to be integers.
 Propagation need not find optimal bounds, but proves every equality needed
 here. The upper-bound vector is checked as an exact feasible witness at
 every stage. No solver, tolerances, saved ranks, or certificates are used.
+The partial rank oracle returns a value only when its bounds agree. Minor
+construction and the final checks use only this oracle interface.
 Run without Python's -O option: assertions are part of the verification.
 
 The deductions use Shannon inequalities, not almost entropicity. The mathematical
@@ -46,7 +50,11 @@ def subsets(points):
 
 
 class ClosureSystem:
-    """An intersection-closed family, ordered so the least superset comes first."""
+    """Total closure from proved dependencies, not necessarily all dependencies.
+
+    The family is intersection-closed and ordered by size, so its first
+    superset of S is the unique least closed superset of S.
+    """
 
     def __init__(self, closed_sets):
         family = frozenset(map(frozenset, closed_sets))
@@ -177,21 +185,53 @@ def from_rank_table(rank):
     return RankBounds(closed, rank)
 
 
-def projection(ranks, contracted, retained):
-    """Bounds of (h / contracted)|retained, when h(contracted) is fixed.
+class UndeterminedRankError(ValueError):
+    """The inequalities do not force a unique rank for the queried set."""
 
-    Subtract only the proved fixed rank; subtracting separate interval
-    endpoints would not give valid bounds.
+
+class RankOracle:
+    """A callable rank function on subsets of an explicit ground set."""
+
+    def __init__(self, ground, evaluate):
+        self.ground = frozenset(ground)
+        self._evaluate = lru_cache(None)(evaluate)
+
+    def __call__(self, points):
+        s = frozenset(points)
+        if not s <= self.ground:
+            raise ValueError(f"Unknown elements in rank query: {sorted(s - self.ground)}.")
+        return self._evaluate(s)
+
+    def minor(self, contracted, retained):
+        """Return S -> r(S union contracted) - r(contracted), with fixed offset."""
+        contracted, retained = frozenset(contracted), frozenset(retained)
+        if contracted & retained or not (contracted | retained) <= self.ground:
+            raise ValueError("Contracted and retained sets must be disjoint subsets of the ground set.")
+        offset = self(contracted)
+        return RankOracle(retained, lambda s: self(s | contracted) - offset)
+
+
+def im_extension_oracle(ground, seed_rank, extensions, on_extension=None):
+    """Propagate a seed rank oracle through (new point, three lines) steps.
+
+    The optional observer receives each step's compressed bounds for reporting.
     """
-    contracted = frozenset(contracted)
-    assert len(set(retained)) == len(retained) and contracted.isdisjoint(retained)
-    lower, upper = ranks.rank_bounds(contracted)
-    assert lower == upper, "The contracted set must have a fixed rank."
-    result = []
-    for s in subsets(retained):
-        lo, hi = ranks.rank_bounds(s | contracted)
-        result.append((s, lo - lower, hi - lower))
-    return result
+    bounds = from_rank_table({s: seed_rank(s) for s in subsets(ground)})
+    for point, lines in extensions:
+        lines = tuple(map(frozenset, lines))
+        bounds, premises = bounds.im_extend(point, lines)
+        bounds = bounds.compress()
+        if on_extension is not None:
+            on_extension(point, lines, premises, bounds)
+
+    def rank(s):
+        lower, upper = bounds.rank_bounds(s)
+        if lower != upper:
+            raise UndeterminedRankError(
+                f"Rank of {sorted(s)} is not uniquely determined: [{lower}, {upper}].")
+        return lower
+
+    return RankOracle(bounds.closure.ground, rank)
 
 
 # The example-specific data starts here. N* has rank four; its other
@@ -215,20 +255,25 @@ CONTRACT = (13,)
 RETAIN = (1, 2, 4, 5, 6, 8, 12, 14, 15, 16)
 
 
-def check_desargues(projected):
-    # First check that ALL 1024 coordinates are forced integral ranks.
-    assert len(projected) == 1024
-    assert all(lo == hi and lo.denominator == 1 for _, lo, hi in projected)
-    rank = {s: int(lo) for s, lo, _ in projected}
-    points = list(RETAIN)
-    assert rank[frozenset()] == 0 and rank[frozenset(points)] == 3
-    for s, r in rank.items():
-        assert 0 <= r <= len(s)
-        for p in points:
-            assert rank[s | {p}] >= r
-        for p, q in combinations(points, 2):
-            assert rank[s | {p}] + rank[s | {q}] >= r + rank[s | {p, q}]
-    r = lambda *ps: rank[frozenset(ps)]
+def check_matroid(rank):
+    """Check all matroid rank axioms using only the oracle's public interface."""
+    assert rank(()) == 0
+    for s in subsets(rank.ground):
+        value = rank(s)
+        assert value.denominator == 1 and 0 <= value <= len(s)
+        for p in rank.ground:
+            assert rank(s | {p}) >= value
+        for p, q in combinations(rank.ground, 2):
+            assert rank(s | {p}) + rank(s | {q}) >= value + rank(s | {p, q})
+
+
+def check_desargues(rank):
+    """Check the complete minor and the planar theorem using rank queries only."""
+    points = rank.ground
+    assert points == frozenset(RETAIN)
+    check_matroid(rank)
+    assert rank(points) == 3
+    r = lambda *ps: rank(ps)
     assert all(r(p) == 1 for p in points)
     assert all(r(p, q) == 2 for p, q in combinations(points, 2))
     o, a, b, x = 4, (2, 15, 12), (6, 16, 8), (5, 14, 1)
@@ -242,42 +287,38 @@ def check_desargues(projected):
         assert r(a[i], a[j], x[k]) == r(b[i], b[j], x[k]) == 2
     assert r(*x) == 3
     print(f"Desargues: O={o}, a={a}, b={b}, x={x}")
-    print("All corresponding side lines are distinct: r(O,ai,aj)=3 for i != j.")
     print("All nine collinear triples have rank 2, but r(x1,x2,x3)=3.")
     print("The restriction is a simple rank-3 matroid; planar AE Desargues is violated.")
 
 
 def main(output):
     start = perf_counter()
-    output.mkdir(parents=True, exist_ok=True)
-    nonbases = set(map(frozenset, NONBASES))
-    bases = [frozenset(b) for b in combinations(range(1, 11), 4) if frozenset(b) not in nonbases]
-    assert len(bases) == 190
-    ranks = from_rank_table({s: max(len(s & b) for b in bases) for s in subsets(range(1, 11))})
-    print(f"Initial rank-4 matroid: 10 points, {len(ranks.closure.closed)} closed sets.", flush=True)
     stages = []
-    for new_point, lines in enumerate(IM_LINES, 11):
-        extended, premises = ranks.im_extend(new_point, lines)
-        print(f"\nAdd {new_point}: h({new_point})=1; h(L+{new_point})=h(L) for L in {lines}.", flush=True)
-        print("Premises: " + "; ".join(f"h({sorted(s)})={v}" for s, v in premises), flush=True)
-        ranks = extended.compress()
-        intervals = [(s, *ranks.rank_bounds(s)) for s in ranks.closure.closed]
+
+    def record(point, lines, premises, bounds):
+        intervals = [(s, *bounds.rank_bounds(s)) for s in bounds.closure.closed]
         uncertain = sum(lo != hi for _, lo, hi in intervals)
-        print(f"Closed sets: {len(extended.closure.closed)} before compression, {len(ranks.closure.closed)} after; "
-              f"{uncertain} undetermined ranks.", flush=True)
-        stages.append({"new_point": new_point, "lines": lines,
+        print(f"Add {point}: {len(intervals)} closed sets after compression; {uncertain} undetermined ranks.", flush=True)
+        stages.append({"new_point": point, "lines": [sorted(line) for line in lines],
                        "premises": [{"set": sorted(s), "rank": v} for s, v in premises],
                        "closed_set_bounds": [{"set": sorted(s), "lower": str(lo), "upper": str(hi)}
                                              for s, lo, hi in intervals]})
+
+    nonbases = set(map(frozenset, NONBASES))
+    bases = [frozenset(b) for b in combinations(range(1, 11), 4) if frozenset(b) not in nonbases]
+    assert len(bases) == 190
+    seed_rank = lambda s: max(len(s & b) for b in bases)
+    ambient = im_extension_oracle(range(1, 11), seed_rank, enumerate(IM_LINES, 11), record)
+    minor = ambient.minor(CONTRACT, RETAIN)
+    check_desargues(minor)
+    output.mkdir(parents=True, exist_ok=True)
     (output / "extensions.json").write_text(json.dumps(stages, indent=2) + "\n")
-    projected = projection(ranks, CONTRACT, RETAIN)
     with (output / "projection.csv").open("w", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["local_mask", "points", "lower", "upper"])
-        for local, (s, lo, hi) in enumerate(projected):
-            writer.writerow([local, " ".join(map(str, sorted(s))), str(lo), str(hi)])
-    print(f"\nContract {CONTRACT}; restrict to {RETAIN}.")
-    check_desargues(projected)
+        for local, s in enumerate(subsets(RETAIN)):
+            value = minor(s)
+            writer.writerow([local, " ".join(map(str, sorted(s))), str(value), str(value)])
     print(f"Wrote six extensions and all 1024 coordinate bounds to {output}.")
     print(f"Exact arithmetic only; {perf_counter() - start:.2f} seconds.")
 

@@ -12,8 +12,10 @@ import unittest
 
 from draw_im_steps import compact_steps
 from draw_matroid import load_matroid
-from im_projection import (ClosureSystem, Inequality, RankBounds, from_rank_table,
-                           main, projection, subsets)
+from im_projection import (CONTRACT, IM_LINES, RETAIN, ClosureSystem, Inequality,
+                           RankBounds, RankOracle, UndeterminedRankError,
+                           check_desargues, check_matroid, from_rank_table,
+                           im_extension_oracle, main, subsets)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +112,8 @@ class RankBoundsTests(unittest.TestCase):
             self.assertLessEqual(lo, value)
             self.assertLessEqual(value, hi)
         self.assertEqual(ranks.rank_bounds({1, 2}), (1, 2))
+        self.assertEqual(ranks.closure({1, 2}), {1, 2})
+        self.assertNotIn(frozenset({1, 2}), ranks.fixed)
 
     def test_inconsistent_submodular_data_are_rejected(self):
         with self.assertRaisesRegex(AssertionError, "Inconsistent rank bounds"):
@@ -125,18 +129,6 @@ class RankBoundsTests(unittest.TestCase):
         self.assertEqual(ranks.closure(()), {2})
         self.assertEqual([ranks.rank_bounds(s) for s in table],
                          [(r, r) for r in table.values()])
-
-    def test_uncertain_contracted_rank_is_rejected(self):
-        ranks = bounds((1, 2, 3), {(): 0, (1,): 1, (2,): 1, (3,): 1, (1, 2, 3): 2})
-        with self.assertRaisesRegex(AssertionError, "contracted set must have a fixed rank"):
-            projection(ranks, {1, 2}, [3])
-
-    def test_projection_keeps_sparse_labels_and_retained_order(self):
-        weights = {2: Fraction(1, 3), 7: Fraction(2, 3), 11: Fraction(4, 3)}
-        ranks = from_rank_table({s: sum(weights[p] for p in s) for s in subsets(weights)})
-        actual = projection(ranks, {7}, (11, 2))
-        expected = [0, Fraction(4, 3), Fraction(1, 3), Fraction(5, 3)]
-        self.assertEqual(actual, [(s, r, r) for s, r in zip(subsets((11, 2)), expected)])
 
     def test_im_extension_requires_rank_four_for_the_three_line_union(self):
         # U(3,6): all line ranks and pairwise union ranks have the required
@@ -154,6 +146,57 @@ class RankBoundsTests(unittest.TestCase):
             bounds(range(1, 6), fixed)
 
 
+class RankOracleTests(unittest.TestCase):
+    def test_fractional_seed_and_minor_keep_the_original_labels(self):
+        weights = {2: Fraction(1, 3), 7: Fraction(2, 3), 11: Fraction(4, 3)}
+        rank = im_extension_oracle(weights, lambda s: sum(weights[p] for p in s), ())
+        minor = rank.minor({7}, {2, 11})
+        self.assertEqual(minor.ground, {2, 11})
+        self.assertEqual(minor(()), 0)
+        self.assertEqual(minor({2}), Fraction(1, 3))
+        self.assertEqual(minor({11}), Fraction(4, 3))
+        self.assertEqual(minor({2, 11}), Fraction(5, 3))
+        with self.assertRaisesRegex(ValueError, 'Unknown elements'):
+            minor({7})
+
+    def test_minor_requires_disjoint_subsets_of_the_ground_set(self):
+        rank = RankOracle({2, 7}, len)
+        for contracted, retained in (({2}, {2}), ({9}, {7}), ({2}, {9})):
+            with self.subTest(contracted=contracted, retained=retained):
+                with self.assertRaisesRegex(ValueError, 'disjoint subsets'):
+                    rank.minor(contracted, retained)
+
+    def test_fractional_rank_is_allowed_by_the_oracle_but_is_not_a_matroid(self):
+        rank = RankOracle({2}, lambda s: Fraction(len(s), 3))
+        self.assertEqual(rank({2}), Fraction(1, 3))
+        with self.assertRaises(AssertionError):
+            check_matroid(rank)
+
+
+class IMOracleTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        seed = load_matroid(ROOT / 'data/dual_matroid.json')
+        cls.ambient = im_extension_oracle(seed.ground, seed.rank, enumerate(IM_LINES, 11))
+        cls.minor = cls.ambient.minor(CONTRACT, RETAIN)
+        cls.expected = load_matroid(ROOT / 'data/final_matroid.json')
+
+    def test_every_minor_rank_matches_the_saved_matroid(self):
+        for s in subsets(RETAIN):
+            self.assertEqual(self.minor(s), self.expected.rank(s), sorted(s))
+
+    def test_uncertain_ambient_rank_and_contraction_raise_an_error(self):
+        uncertain = {1, 3, 9, 14}
+        with self.assertRaisesRegex(UndeterminedRankError, r'not uniquely determined: \[3, 4\]'):
+            self.ambient(uncertain)
+        with self.assertRaises(UndeterminedRankError):
+            self.ambient.minor(uncertain, {2})
+
+    def test_desargues_consumer_accepts_an_independent_basis_rank_oracle(self):
+        with redirect_stdout(StringIO()):
+            check_desargues(RankOracle(self.expected.ground, self.expected.rank))
+
+
 class CompleteVerificationTests(unittest.TestCase):
     def test_six_extensions_reproduce_all_minor_ranks_and_display_incidences(self):
         with TemporaryDirectory() as directory, redirect_stdout(StringIO()):
@@ -168,6 +211,20 @@ class CompleteVerificationTests(unittest.TestCase):
             original = load_matroid(ROOT / "data/dual_matroid.json")
             saved = json.loads((ROOT / "data/im_steps.json").read_text())
             self.assertEqual(compact_steps(stages, original), saved)
+
+    def test_standalone_script_reproduces_the_minor_without_other_project_files(self):
+        with TemporaryDirectory() as directory:
+            script = Path(directory) / 'im_projection.py'
+            script.write_bytes((ROOT / 'im_projection.py').read_bytes())
+            output = Path(directory) / 'output'
+            result = subprocess.run([sys.executable, '-I', '-B', str(script), '--output', str(output)],
+                                    cwd=directory, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(sorted(p.name for p in output.iterdir()), ['extensions.json', 'projection.csv'])
+            actual = load_matroid(output / 'projection.csv')
+            expected = load_matroid(ROOT / 'data/final_matroid.json')
+            self.assertEqual(actual.ground, expected.ground)
+            self.assertEqual(actual.bases, expected.bases)
 
     def test_optimized_python_cannot_bypass_verification_on_import(self):
         result = subprocess.run([sys.executable, "-O", "-c", "import im_projection"],

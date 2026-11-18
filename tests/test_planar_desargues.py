@@ -1,26 +1,16 @@
 """Check the planar theorem's hypotheses, including a degenerate counterexample."""
 
 from contextlib import redirect_stdout
-from fractions import Fraction
 from io import StringIO
 from itertools import combinations
 import json
 from pathlib import Path
 import unittest
 
-from im_projection import RETAIN, check_desargues, subsets
-from im_projection2 import RankOracle, check_desargues as check_oracle_desargues
+from im_projection import RETAIN, RankOracle, check_desargues
 
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def projection(rank):
-    result = []
-    for subset in subsets(RETAIN):
-        value = Fraction(rank(subset))
-        result.append((subset, value, value))
-    return result
 
 
 def field_rank(columns, prime=101):
@@ -49,8 +39,7 @@ class PlanarDesarguesTests(unittest.TestCase):
         bases = list(map(frozenset, data["bases"]))
         rank = lambda subset: max(len(subset & basis) for basis in bases)
         with redirect_stdout(StringIO()):
-            check_desargues(projection(rank))
-            check_oracle_desargues(RankOracle(RETAIN, rank))
+            check_desargues(RankOracle(RETAIN, rank))
 
     def test_representable_degeneracy_is_not_a_desargues_obstruction(self):
         # The F_101 columns in the README, with the verifier's role labels.
@@ -77,9 +66,7 @@ class PlanarDesarguesTests(unittest.TestCase):
         self.assertEqual(rank([6, 16, 8]), 3)
         self.assertEqual(rank([1, 5, 14]), 3)
         with self.assertRaisesRegex(AssertionError, "distinct corresponding side lines"):
-            check_desargues(projection(rank))
-        with self.assertRaisesRegex(AssertionError, "distinct corresponding side lines"):
-            check_oracle_desargues(RankOracle(RETAIN, rank))
+            check_desargues(RankOracle(RETAIN, rank))
 
 
 if __name__ == "__main__":

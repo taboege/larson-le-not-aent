@@ -15,7 +15,6 @@ classifiers = [
 
 [project.scripts]
 larson-le-verify = "im_projection:cli"
-larson-le-verify2 = "im_projection2:cli"
 draw-matroid = "draw_matroid:cli"
 draw-im-steps = "draw_im_steps:cli"
 
@@ -23,5 +22,5 @@ draw-im-steps = "draw_im_steps:cli"
 drawing = ["CairoSVG>=2.7.1"]
 
 [tool.setuptools]
-py-modules = ["im_projection", "im_projection2", "draw_matroid", "draw_im_steps"]
+py-modules = ["im_projection", "draw_matroid", "draw_im_steps"]
 include-package-data = false
